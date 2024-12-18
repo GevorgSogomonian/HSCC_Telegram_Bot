@@ -4,9 +4,9 @@ services:
     image: postgres:15-alpine
     container_name: postgres
     environment:
-      POSTGRES_USER: new_user
-      POSTGRES_PASSWORD: secure_password
-      POSTGRES_DB: postgres
+      POSTGRES_USER: hse_user
+      POSTGRES_PASSWORD: hse_password
+      POSTGRES_DB: hse_database
     ports:
       - "5432:5432"
     volumes:
