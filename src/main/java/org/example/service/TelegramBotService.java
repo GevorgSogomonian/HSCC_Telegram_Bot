@@ -2,9 +2,12 @@ package org.example.service;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.entity.BotState;
+import org.example.entity.Event;
 import org.example.entity.Role;
 import org.example.entity.Usr;
+import org.example.repository.EventRepository;
 import org.example.repository.UserRepository;
 import org.example.state_manager.StateManager;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
@@ -25,10 +29,8 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
-import static org.example.entity.Role.ADMIN;
-import static org.example.entity.Role.USER;
-
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class TelegramBotService extends TelegramLongPollingBot {
 
@@ -36,6 +38,9 @@ public class TelegramBotService extends TelegramLongPollingBot {
     private final CommandProcessingService commandProcessingService;
     private final UserRepository userRepository;
     private final StateManager stateManager = new StateManager();
+    private final EventRepository eventRepository;
+    private final BaseUserService baseUserService;
+    private final AdminUserService adminUserService;
 
     @Value("${spring.telegram.bot.username}")
     private String botUsername;
@@ -43,7 +48,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
     @Value("${spring.telegram.bot.token}")
     private String botToken;
 
-    private final Map<BotState, Consumer<Update>> commandHandlers = new HashMap<>();
+    private final Map<String, Consumer<Update>> commandHandlers = new HashMap<>();
 
     @PostConstruct
     public void init() {
@@ -51,7 +56,9 @@ public class TelegramBotService extends TelegramLongPollingBot {
         System.out.println("Token: " + botToken);
 
 //        //Для администратора
-//        commandHandlers.put(BotState.START, this::handleSearchCommand);
+//        commandHandlers.put("Все мероприятия", this::handleAllEventsCommand);
+//        commandHandlers.put("Новое мероприятие", this::handleNewEventCommand);
+
 //        commandHandlers.put(BotState.REGISTRATION, this::startRegisterNewUser);
 //
 //        //Для обычных пользователей
@@ -85,9 +92,39 @@ public class TelegramBotService extends TelegramLongPollingBot {
 //                return;
 //            }
 
+            sendMessageResponse(replyMessage);
 //            commandHandlers.getOrDefault(userMessage, this::handleUnknownCommand).accept(update);
         }
     }
+
+//    private SendMessage processMessage1(Update update) {
+//        Long chatId = update.getMessage().getChatId();
+//        String userMessage = update.getMessage().getText();
+//
+//        SendMessage message = new SendMessage();
+//
+//        Optional<Usr> usrOptional = userRepository.findByChatId(chatId);
+//
+//        if (usrOptional.isEmpty()) {
+//            registrationService.onUpdateRecieved(update);
+//        } else {
+//            Usr usr = usrOptional.get();
+//
+//            switch (usr.getRole()) {
+//                case ADMIN:
+//                    adminUserService.onUpdateRecieved(update);
+//                    break;
+//
+//                case USER:
+//                    baseUserService.onUpdateRecieved(update);
+//                    break;
+//            }
+//        }
+//
+//        message.setChatId(chatId.toString());
+//
+//        return message;
+//    }
 
     private SendMessage processMessage(Update update, BotState state) {
         Long chatId = update.getMessage().getChatId();
@@ -96,7 +133,25 @@ public class TelegramBotService extends TelegramLongPollingBot {
         SendMessage message = new SendMessage();
         message.setChatId(chatId.toString());
 
+        if (userRepository.findByChatId(chatId).isEmpty()) {
+            processRegistration(update, state);
+        } else {
+            processTextMessage(update);
+        }
+
+        return message;
+    }
+
+    private void processRegistration(Update update, BotState state) {
         switch (state) {
+            case START:
+                handleStartState(update);
+                break;
+
+            case REGISTRATION:
+                startRegisterNewUser(update);
+                break;
+
             case CHOOSING_ROLE:
                 roleChooser(update);
                 break;
@@ -106,15 +161,26 @@ public class TelegramBotService extends TelegramLongPollingBot {
                 break;
 
             default:
-                userRepository.findByChatId(chatId).ifPresentOrElse(
-                        usr -> System.out.println("Пользователь уже зарегистрирован: " + usr.getUsername()),
-                        () -> startRegisterNewUser(update)
-                );
+                processTextMessage(update);
+                break;
 //                message.setText("Что-то пошло не так. Попробуй начать заново с команды /start.");
 //                stateManager.removeUserState(chatId);
         }
+    }
 
-        return message;
+    private void processTextMessage(Update update) {
+        List<SendMessage> sendMessageList;
+
+        Long chatId = update.getMessage().getChatId();
+        String userMessage = update.getMessage().getText();
+        Role userRole = userRepository.findByChatId(chatId).get().getRole();
+
+        sendMessageList = switch (userRole) {
+            case ADMIN -> adminUserService.onUpdateRecieved(update);
+            case USER -> baseUserService.onUpdateRecieved(update);
+        };
+
+        sendMessageList.forEach(this::sendMessageResponse);
     }
 
     private String truncateDescription(String description) {
@@ -124,6 +190,20 @@ public class TelegramBotService extends TelegramLongPollingBot {
         }
         return description != null ? description : "Описание недоступно.";
     }
+
+//    private void handleAllEventsCommand(Update update) {
+//
+//    }
+//
+//    private void handleNewEventCommand(Update update) {
+//        Long chatId = update.getMessage().getChatId();
+//        String userMessage = update.getMessage().getText();
+//
+//        sendSplitTextResponse(chatId, """
+//                Введите название мероприятия:""");
+//
+//        stateManager.setUserState(chatId, BotState.ENTERING_EVENT_NAME);
+//    }
 
     private void handleUnknownCommand(Update update) {
         SendMessage message = new SendMessage();
@@ -155,34 +235,116 @@ public class TelegramBotService extends TelegramLongPollingBot {
         }
     }
 
-    private void sendSplitResponse(String chatId, String text) {
-        int maxMessageLength = 4096;
-        for (int i = 0; i < text.length(); i += maxMessageLength) {
-            String part = text.substring(i, Math.min(text.length(), i + maxMessageLength));
-            sendResponse(chatId, part);
+    private void handleStartState(Update update) {
+        Long chatId = update.getMessage().getChatId();
+        String userMessage = update.getMessage().getText();
+
+        Optional<Usr> usrOptional = userRepository.findByChatId(chatId);
+
+        if (usrOptional.isPresent()) {
+            Usr usr = usrOptional.get();
+            System.out.println("Пользователь уже зарегистрирован: " + usr.getUsername());
+
+//            SendMessage sendMessage = SendMessage.builder()
+//                    .chatId(chatId)
+//                    .text(String.format("""
+//                Приветикии-пистолетики, %s!
+//
+//                вы в состоянии START""",
+//                            usr.getFirstName()))
+//                    .build();
+
+            processTextMessage(update);
+
+//            KeyboardButton keyboardButton1 = new KeyboardButton("Новое мероприятие");
+//            KeyboardButton keyboardButton2 = new KeyboardButton("Все мероприятия");
+//            KeyboardRow row1 = new KeyboardRow();
+//            KeyboardRow row2 = new KeyboardRow();
+//
+//            List<KeyboardRow> keyboardRows = new ArrayList<>();
+//            keyboardRows.add(row1);
+//            keyboardRows.add(row2);
+//
+//            row1.add(keyboardButton1);
+//            row2.add(keyboardButton2);
+//
+//            ReplyKeyboardMarkup keyboardMarkup = ReplyKeyboardMarkup.builder()
+//                    .keyboard(keyboardRows)
+//                    .resizeKeyboard(true)
+//                    .oneTimeKeyboard(true)
+//                    .build();
+//
+//            sendMessageResponse(sendMessage);
+        } else {
+            startRegisterNewUser(update);
         }
     }
 
-    private void sendResponse(String chatId, String text) {
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId);
-        message.setText(text);
-
-        message.setParseMode("Markdown");
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
-    }
+//    private void eventNameCheck(Update update) {
+//        Long chatId = update.getMessage().getChatId();
+//        String userMessage = update.getMessage().getText();
+//        int maxNameLength = 120;
+//
+//        if (eventRepository.findByEventName(userMessage).isPresent()) {
+//            sendSplitTextResponse(chatId, String.format("""
+//                    Мероприятие с названием: %s уже существует.
+//
+//                    В разделе 'Все мероприятия' вы можете удалять и редактировать свои мероприятия""",
+//                    userMessage));
+//        } else if (userMessage.isBlank()) {
+//            sendSplitTextResponse(chatId, """
+//                    Название мероприятия не может быть пустым(""");
+//        } else if (userMessage.length() > maxNameLength) {
+//            sendSplitTextResponse(chatId, String.format("""
+//                    Название мероприятия не может быть больше %s символов(""",
+//                    maxNameLength));
+//        } else {
+//            Event newEvent = Event.builder()
+//                    .eventName(userMessage)
+//                    .build();
+//
+//            eventRepository.save(newEvent);
+//
+//            stateManager.setUserState(chatId, BotState.ENTERING_EVENT_DESCRIPTION);
+//        }
+//    }
+//
+//    private void eventDescriptionCheck(Update update) {
+//        Long chatId = update.getMessage().getChatId();
+//        String userMessage = update.getMessage().getText();
+//        int maxDescriptioonLength = 2000;
+//
+//        if (eventRepository.findByEventName(userMessage).isPresent()) {
+//            sendSplitTextResponse(chatId, String.format("""
+//                    Мероприятие с названием: %s уже существует.
+//
+//                    В разделе 'Все мероприятия' вы можете удалять и редактировать свои мероприятия""",
+//                    userMessage));
+//        } else if (userMessage.isBlank()) {
+//            sendSplitTextResponse(chatId, """
+//                    Название мероприятия не может быть пустым(""");
+//        } else if (userMessage.length() > maxDescriptioonLength) {
+//            sendSplitTextResponse(chatId, String.format("""
+//                    Название мероприятия не может быть больше %s символов(""",
+//                    maxDescriptioonLength));
+//        } else {
+//            Event newEvent = Event.builder()
+//                    .eventName(userMessage)
+//                    .build();
+//
+//            eventRepository.save(newEvent);
+//
+//            stateManager.setUserState(chatId, BotState.ENTERING_EVENT_DESCRIPTION);
+//        }
+//    }
 
     private void startRegisterNewUser(Update update) {
         Long chatId = update.getMessage().getChatId();
 
         if (update.hasMessage() && update.getMessage().getFrom() != null) {
-            org.telegram.telegrambots.meta.api.objects.User fromUser = update.getMessage().getFrom();
+            User fromUser = update.getMessage().getFrom();
 
-            sendSplitResponse(chatId.toString(), """
+            sendSplitTextResponse(chatId, """
                     Давайте начнём регистрацию!
                     
                     Выберите свою роль:
@@ -201,7 +363,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
 
         switch (userMessage) {
             case "admin":
-                sendSplitResponse(chatId.toString(), """
+                sendSplitTextResponse(chatId, """
                 Введите специальный ключ:""");
                 stateManager.setUserState(chatId, BotState.ENTERING_SPECIAL_KEY);
                 break;
@@ -209,10 +371,11 @@ public class TelegramBotService extends TelegramLongPollingBot {
             case "usr":
                 commandProcessingService.saveNewUser(update, Role.USER);
                 stateManager.removeUserState(chatId);
+                processTextMessage(update);
                 break;
 
             default:
-                sendSplitResponse(chatId.toString(), """
+                sendSplitTextResponse(chatId, """
                 Введите корректные данные.""");
         }
     }
@@ -223,19 +386,54 @@ public class TelegramBotService extends TelegramLongPollingBot {
 
         switch (message) {
             case "1234":
-                sendSplitResponse(chatId.toString(), """
+                sendSplitTextResponse(chatId, """
                 Ключ верный.""");
                 commandProcessingService.saveNewUser(update, Role.ADMIN);
 
                 stateManager.removeUserState(chatId);
+                processTextMessage(update);
                 break;
 
             default:
-                sendSplitResponse(chatId.toString(), """
+                sendSplitTextResponse(chatId, """
                 Ключ неверный.
                 
                 Начните регистрацию заново)""");
                 startRegisterNewUser(update);
+        }
+    }
+
+    public void sendMessageResponse(SendMessage sendMessage) {
+        if (sendMessage.getChatId().isEmpty()) {
+            log.error(String.format("""
+                    ChatId is empty. ChatId: ->%s<-""",
+                    sendMessage.getChatId()));
+        }
+        try {
+            execute(sendMessage);
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void sendSplitTextResponse(Long chatId, String text) {
+        int maxMessageLength = 4096;
+        for (int i = 0; i < text.length(); i += maxMessageLength) {
+            String part = text.substring(i, Math.min(text.length(), i + maxMessageLength));
+            sendResponse(chatId, part);
+        }
+    }
+
+    public void sendResponse(Long chatId, String text) {
+        SendMessage message = new SendMessage();
+        message.setChatId(chatId);
+        message.setText(text);
+
+        message.setParseMode("Markdown");
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
         }
     }
 }
