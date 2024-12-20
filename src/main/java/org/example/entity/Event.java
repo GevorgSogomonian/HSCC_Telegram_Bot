@@ -34,4 +34,13 @@ public class Event {
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Override
+    public String toString() {
+        return String.format("""
+                *%s*:
+                
+                %s""",
+                eventName, description);
+    }
 }

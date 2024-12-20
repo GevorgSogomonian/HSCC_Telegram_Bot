@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class StateManager {
-    private final Map<Long, BotState> userStates = new HashMap<>();
+    private final Map<Long, BotState> userStates = new ConcurrentHashMap<>();
 
     public BotState getUserState(Long userId) {
         return userStates.getOrDefault(userId, BotState.START);

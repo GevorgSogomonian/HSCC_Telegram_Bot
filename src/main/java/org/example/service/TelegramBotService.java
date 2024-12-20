@@ -48,22 +48,10 @@ public class TelegramBotService extends TelegramLongPollingBot {
     @Value("${spring.telegram.bot.token}")
     private String botToken;
 
-    private final Map<String, Consumer<Update>> commandHandlers = new HashMap<>();
-
     @PostConstruct
     public void init() {
         System.out.println("Username: " + botUsername);
         System.out.println("Token: " + botToken);
-
-//        //Для администратора
-//        commandHandlers.put("Все мероприятия", this::handleAllEventsCommand);
-//        commandHandlers.put("Новое мероприятие", this::handleNewEventCommand);
-
-//        commandHandlers.put(BotState.REGISTRATION, this::startRegisterNewUser);
-//
-//        //Для обычных пользователей
-//        commandHandlers.put("Доступные мероприятия", this::handleMostPersonalCommand);
-//        commandHandlers.put("Мои мероприятия", this::handlePersonalCommand);
     }
 
     @Override
@@ -84,47 +72,9 @@ public class TelegramBotService extends TelegramLongPollingBot {
             BotState currentState = stateManager.getUserState(chatId);
             SendMessage replyMessage = processMessage(update, currentState);
 
-//            if (waitingForInput.containsKey(chatId.toString())) {
-//                String pendingCommand = waitingForInput.remove(chatId.toString());
-//                if (pendingCommand.equals("search")) {
-//                    processSearchQuery(update);
-//                }
-//                return;
-//            }
-
             sendMessageResponse(replyMessage);
-//            commandHandlers.getOrDefault(userMessage, this::handleUnknownCommand).accept(update);
         }
     }
-
-//    private SendMessage processMessage1(Update update) {
-//        Long chatId = update.getMessage().getChatId();
-//        String userMessage = update.getMessage().getText();
-//
-//        SendMessage message = new SendMessage();
-//
-//        Optional<Usr> usrOptional = userRepository.findByChatId(chatId);
-//
-//        if (usrOptional.isEmpty()) {
-//            registrationService.onUpdateRecieved(update);
-//        } else {
-//            Usr usr = usrOptional.get();
-//
-//            switch (usr.getRole()) {
-//                case ADMIN:
-//                    adminUserService.onUpdateRecieved(update);
-//                    break;
-//
-//                case USER:
-//                    baseUserService.onUpdateRecieved(update);
-//                    break;
-//            }
-//        }
-//
-//        message.setChatId(chatId.toString());
-//
-//        return message;
-//    }
 
     private SendMessage processMessage(Update update, BotState state) {
         Long chatId = update.getMessage().getChatId();
@@ -163,8 +113,6 @@ public class TelegramBotService extends TelegramLongPollingBot {
             default:
                 processTextMessage(update);
                 break;
-//                message.setText("Что-то пошло не так. Попробуй начать заново с команды /start.");
-//                stateManager.removeUserState(chatId);
         }
     }
 
@@ -190,20 +138,6 @@ public class TelegramBotService extends TelegramLongPollingBot {
         }
         return description != null ? description : "Описание недоступно.";
     }
-
-//    private void handleAllEventsCommand(Update update) {
-//
-//    }
-//
-//    private void handleNewEventCommand(Update update) {
-//        Long chatId = update.getMessage().getChatId();
-//        String userMessage = update.getMessage().getText();
-//
-//        sendSplitTextResponse(chatId, """
-//                Введите название мероприятия:""");
-//
-//        stateManager.setUserState(chatId, BotState.ENTERING_EVENT_NAME);
-//    }
 
     private void handleUnknownCommand(Update update) {
         SendMessage message = new SendMessage();
@@ -245,98 +179,11 @@ public class TelegramBotService extends TelegramLongPollingBot {
             Usr usr = usrOptional.get();
             System.out.println("Пользователь уже зарегистрирован: " + usr.getUsername());
 
-//            SendMessage sendMessage = SendMessage.builder()
-//                    .chatId(chatId)
-//                    .text(String.format("""
-//                Приветикии-пистолетики, %s!
-//
-//                вы в состоянии START""",
-//                            usr.getFirstName()))
-//                    .build();
-
             processTextMessage(update);
-
-//            KeyboardButton keyboardButton1 = new KeyboardButton("Новое мероприятие");
-//            KeyboardButton keyboardButton2 = new KeyboardButton("Все мероприятия");
-//            KeyboardRow row1 = new KeyboardRow();
-//            KeyboardRow row2 = new KeyboardRow();
-//
-//            List<KeyboardRow> keyboardRows = new ArrayList<>();
-//            keyboardRows.add(row1);
-//            keyboardRows.add(row2);
-//
-//            row1.add(keyboardButton1);
-//            row2.add(keyboardButton2);
-//
-//            ReplyKeyboardMarkup keyboardMarkup = ReplyKeyboardMarkup.builder()
-//                    .keyboard(keyboardRows)
-//                    .resizeKeyboard(true)
-//                    .oneTimeKeyboard(true)
-//                    .build();
-//
-//            sendMessageResponse(sendMessage);
         } else {
             startRegisterNewUser(update);
         }
     }
-
-//    private void eventNameCheck(Update update) {
-//        Long chatId = update.getMessage().getChatId();
-//        String userMessage = update.getMessage().getText();
-//        int maxNameLength = 120;
-//
-//        if (eventRepository.findByEventName(userMessage).isPresent()) {
-//            sendSplitTextResponse(chatId, String.format("""
-//                    Мероприятие с названием: %s уже существует.
-//
-//                    В разделе 'Все мероприятия' вы можете удалять и редактировать свои мероприятия""",
-//                    userMessage));
-//        } else if (userMessage.isBlank()) {
-//            sendSplitTextResponse(chatId, """
-//                    Название мероприятия не может быть пустым(""");
-//        } else if (userMessage.length() > maxNameLength) {
-//            sendSplitTextResponse(chatId, String.format("""
-//                    Название мероприятия не может быть больше %s символов(""",
-//                    maxNameLength));
-//        } else {
-//            Event newEvent = Event.builder()
-//                    .eventName(userMessage)
-//                    .build();
-//
-//            eventRepository.save(newEvent);
-//
-//            stateManager.setUserState(chatId, BotState.ENTERING_EVENT_DESCRIPTION);
-//        }
-//    }
-//
-//    private void eventDescriptionCheck(Update update) {
-//        Long chatId = update.getMessage().getChatId();
-//        String userMessage = update.getMessage().getText();
-//        int maxDescriptioonLength = 2000;
-//
-//        if (eventRepository.findByEventName(userMessage).isPresent()) {
-//            sendSplitTextResponse(chatId, String.format("""
-//                    Мероприятие с названием: %s уже существует.
-//
-//                    В разделе 'Все мероприятия' вы можете удалять и редактировать свои мероприятия""",
-//                    userMessage));
-//        } else if (userMessage.isBlank()) {
-//            sendSplitTextResponse(chatId, """
-//                    Название мероприятия не может быть пустым(""");
-//        } else if (userMessage.length() > maxDescriptioonLength) {
-//            sendSplitTextResponse(chatId, String.format("""
-//                    Название мероприятия не может быть больше %s символов(""",
-//                    maxDescriptioonLength));
-//        } else {
-//            Event newEvent = Event.builder()
-//                    .eventName(userMessage)
-//                    .build();
-//
-//            eventRepository.save(newEvent);
-//
-//            stateManager.setUserState(chatId, BotState.ENTERING_EVENT_DESCRIPTION);
-//        }
-//    }
 
     private void startRegisterNewUser(Update update) {
         Long chatId = update.getMessage().getChatId();

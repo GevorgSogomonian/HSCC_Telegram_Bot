@@ -67,16 +67,8 @@ public class AdminUserService {
 
     @PostConstruct
     public void init() {
-
-        //Для администратора
         commandHandlers.put("Все мероприятия", this::handleAllEventsCommand);
         commandHandlers.put("Новое мероприятие", this::handleNewEventCommand);
-
-//        commandHandlers.put(BotState.REGISTRATION, this::startRegisterNewUser);
-//
-//        //Для обычных пользователей
-//        commandHandlers.put("Доступные мероприятия", this::handleMostPersonalCommand);
-//        commandHandlers.put("Мои мероприятия", this::handlePersonalCommand);
     }
 
     private List<SendMessage> processTextMessage(Update update) {

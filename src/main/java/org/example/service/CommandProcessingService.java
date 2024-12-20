@@ -28,17 +28,6 @@ public class CommandProcessingService {
         return description != null ? description : "Описание недоступно.";
     }
 
-//    @Scheduled(cron = "0 0 0 * * *")
-//    public void cachePopularMovies() {
-//        for (int i = 1; i <= 30; i++) {
-//            Map<String, Object> response = tmdbService.fetchMoviesFromAllPages(i);
-//
-//            if (response != null && response.containsKey("results")) {
-//                ((List<Map<String, Object>>) response.get("results")).forEach(this::saveOrUpdateMovie);
-//            }
-//        }
-//    }
-
     public void saveNewUser(Update update, Role role) {
         Long chatId = update.getMessage().getChatId();
         org.telegram.telegrambots.meta.api.objects.User fromUser = update.getMessage().getFrom();
@@ -55,11 +44,4 @@ public class CommandProcessingService {
 
         userRepository.save(newUsr);
     }
-
-
-//    @PostConstruct
-//    public void init() {
-//        cachePopularMovies();
-//        logger.info("Популярные фильмы успешно загружены");
-//    }
 }
