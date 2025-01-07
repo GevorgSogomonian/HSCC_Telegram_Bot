@@ -12,3 +12,9 @@ spring:
       username: hscc_hse_bot
       token: 8113684980:AAFEpEsQFkf9SDYV50rLG6X7It9aVM43Bfs
       path: false
+
+  minio:
+    url: http://localhost:9000
+    accessKey: minioadmin
+    secretKey: minioadmin
+    bucketName: pictures

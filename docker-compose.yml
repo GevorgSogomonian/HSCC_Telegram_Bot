@@ -1,4 +1,3 @@
-version: "3.9"
 services:
   postgres:
     image: postgres:15-alpine
@@ -11,7 +10,24 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    platform: linux/arm64 # для mac m1
+
+  minio:
+    image: minio/minio:latest
     platform: linux/arm64
+    container_name: minio
+    ports:
+      - "9000:9000" # API Port
+      - "9001:9001" # Console Port
+    environment:
+      MINIO_ROOT_USER: minioadmin # Установите имя пользователя
+      MINIO_ROOT_PASSWORD: minioadmin # Установите пароль
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
 
 volumes:
   postgres_data:
+    driver: local
+  minio_data:
+    driver: local

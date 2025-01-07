@@ -7,12 +7,12 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
-import lombok.Builder;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.time.Duration;
 
 @Data
 @Entity
@@ -35,12 +35,27 @@ public class Event {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "start_time")
+    private LocalDateTime startTime;
+
+    @Column(name = "duration")
+    private Duration duration;
+
+    @Column(name = "image_url")
+    private String imageUrl;
+
     @Override
     public String toString() {
-        return String.format("""
-                *%s*:
-                
-                %s""",
-                eventName, description);
+        return String.format(
+                """
+                        *%s*:
+                        
+                        %s
+                        
+                        Start: %s
+                        Duration: %s minutes""",
+                eventName, description, startTime, duration.toMinutes()
+        );
     }
 }

@@ -10,9 +10,11 @@ import org.example.entity.Usr;
 import org.example.repository.EventRepository;
 import org.example.repository.UserRepository;
 import org.example.state_manager.StateManager;
+import org.example.telegram_api.TelegramApiQueue;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
@@ -41,6 +43,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
     private final EventRepository eventRepository;
     private final BaseUserService baseUserService;
     private final AdminUserService adminUserService;
+    private final TelegramApiQueue telegramApiQueue;
 
     @Value("${spring.telegram.bot.username}")
     private String botUsername;
@@ -66,9 +69,8 @@ public class TelegramBotService extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        if (update.hasMessage() && update.getMessage().hasText()) {
+        if (update.hasMessage()) {
             Long chatId = update.getMessage().getChatId();
-            String userMessage = update.getMessage().getText();
             BotState currentState = stateManager.getUserState(chatId);
             SendMessage replyMessage = processMessage(update, currentState);
 
@@ -78,7 +80,6 @@ public class TelegramBotService extends TelegramLongPollingBot {
 
     private SendMessage processMessage(Update update, BotState state) {
         Long chatId = update.getMessage().getChatId();
-        String userMessage = update.getMessage().getText();
 
         SendMessage message = new SendMessage();
         message.setChatId(chatId.toString());
@@ -120,7 +121,6 @@ public class TelegramBotService extends TelegramLongPollingBot {
         List<SendMessage> sendMessageList;
 
         Long chatId = update.getMessage().getChatId();
-        String userMessage = update.getMessage().getText();
         Role userRole = userRepository.findByChatId(chatId).get().getRole();
 
         sendMessageList = switch (userRole) {
@@ -171,7 +171,6 @@ public class TelegramBotService extends TelegramLongPollingBot {
 
     private void handleStartState(Update update) {
         Long chatId = update.getMessage().getChatId();
-        String userMessage = update.getMessage().getText();
 
         Optional<Usr> usrOptional = userRepository.findByChatId(chatId);
 
@@ -256,6 +255,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
                     ChatId is empty. ChatId: ->%s<-""",
                     sendMessage.getChatId()));
         }
+        sendMessage.setParseMode("Markdown");
         try {
             execute(sendMessage);
         } catch (TelegramApiException e) {

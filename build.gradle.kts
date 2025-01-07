@@ -25,6 +25,7 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql")
 
     // Telegram Bot API
+    implementation("org.telegram:telegrambots:6.5.0")
     implementation("org.telegram:telegrambots-spring-boot-starter:6.5.0")
 
     // JSON Processing
@@ -46,6 +47,8 @@ dependencies {
 
     implementation("org.slf4j:slf4j-api:2.0.9")
     implementation("ch.qos.logback:logback-classic:1.4.11")
+
+    implementation("io.minio:minio:8.4.3")
 }
 
 tasks.test {

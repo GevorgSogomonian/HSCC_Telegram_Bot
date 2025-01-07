@@ -2,19 +2,26 @@ package org.example.service;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import org.example.dto.ChatBotResponse;
 import org.example.entity.BotState;
 import org.example.entity.Event;
 import org.example.entity.Usr;
 import org.example.repository.EventRepository;
 import org.example.repository.UserRepository;
 import org.example.state_manager.StateManager;
+import org.example.telegram_api.TelegramApiQueue;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,6 +37,8 @@ public class BaseUserService {
 
     private final Map<String, Function<Update, List<SendMessage>>> commandHandlers = new HashMap<>();
     private final StateManager stateManager = new StateManager();
+    private final ImageService imageService;
+    private final TelegramApiQueue telegramApiQueue;
 
     public List<SendMessage> onUpdateRecieved(Update update) {
         List<SendMessage> responseMessageList = new ArrayList<>();
@@ -77,15 +86,42 @@ public class BaseUserService {
         Long chatId = update.getMessage().getChatId();
         String userMessage = update.getMessage().getText();
 
-        List<Event> eventList = eventRepository.findAll();
-        eventList.forEach(event -> {
-            sendMessageList.add(SendMessage.builder()
-                            .chatId(chatId)
-                            .text(event.toString())
-                    .build());
+        List<Event> allEvents = eventRepository.findAll();
+
+        allEvents.forEach(event -> {
+            SendPhoto sendPhoto = new SendPhoto();
+
+            sendPhoto.setCaption(String.format("""
+                    *%s*:
+                    
+                    %s""",
+                    event.getEventName(), event.getDescription()));
+            InputStream fileStream = null;
+            try {
+                fileStream = imageService.getFile("pictures", event.getImageUrl());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+            InputFile inputFile = new InputFile(fileStream, event.getImageUrl());
+            sendPhoto.setChatId(chatId.toString());
+            sendPhoto.setPhoto(inputFile);
+            sendPhoto.setParseMode("Markdown");
+
+            InlineKeyboardButton button = new InlineKeyboardButton("Подписаться");
+            button.setCallbackData("регистрация события в google calendar");
+
+            InlineKeyboardMarkup keyboardMarkup = InlineKeyboardMarkup.builder()
+                    .clearKeyboard()
+                    .keyboardRow(List.of(button))
+                    .build();
+
+            sendPhoto.setReplyMarkup(keyboardMarkup);
+
+            telegramApiQueue.addResponse(new ChatBotResponse(chatId, sendPhoto));
         });
 
-        sendMessageList.addAll(handleStartState(update));
+//        sendMessageList.addAll(handleStartState(update));
         return sendMessageList;
     }
 

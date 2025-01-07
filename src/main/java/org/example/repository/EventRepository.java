@@ -9,7 +9,5 @@ import java.util.Optional;
 public interface EventRepository extends JpaRepository<Event, Long> {
     Optional<Event> findByEventName(String eventName);
 
-//    Optional<Event> findEventByCreatorChatId(Long creatorChatId);
-
     Optional<Event> findFirstByCreatorChatIdOrderByUpdatedAtDesc(Long creatorChatId);
 }
