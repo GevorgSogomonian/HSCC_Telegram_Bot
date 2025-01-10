@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 @Slf4j
@@ -39,14 +40,15 @@ public class AdminUserService {
 
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
+    private final Up
 
-    private final Map<String, Function<Update, List<SendMessage>>> commandHandlers = new HashMap<>();
+    private final Map<String, Consumer<Update>> commandHandlers = new HashMap<>();
     private final StateManager stateManager = new StateManager();
     private final ImageService imageService;
     private final TelegramApiQueue telegramApiQueue;
 //    private final TelegramPhotoSender telegramPhotoSender;
 
-    public List<SendMessage> onUpdateRecieved(Update update) {
+    public void onUpdateRecieved(Update update) {
         List<SendMessage> responseMessageList = new ArrayList<>();
 
         if (update.hasMessage()) {
@@ -59,7 +61,7 @@ public class AdminUserService {
         return responseMessageList;
     }
 
-    public List<SendMessage> processMessage(Update update, BotState state) {
+    public void processMessage(Update update, BotState state) {
         Long chatId = update.getMessage().getChatId();
 
         List<SendMessage> responseMessageList = new ArrayList<>();
@@ -84,11 +86,11 @@ public class AdminUserService {
         commandHandlers.put("Новое мероприятие", this::handleNewEventCommand);
     }
 
-    private List<SendMessage> processTextMessage(Update update) {
+    private void processTextMessage(Update update) {
         Long chatId = update.getMessage().getChatId();
         String userMessage = update.getMessage().getText();
 
-        return commandHandlers.getOrDefault(userMessage, this::handleStartState).apply(update);
+        commandHandlers.getOrDefault(userMessage, this::handleStartState).apply(update);
     }
 
     private List<SendMessage> handleAllEventsCommand(Update update) {
@@ -306,9 +308,9 @@ public class AdminUserService {
         return mimeTypes.get(extension);
     }
 
-    private List<SendMessage> handleStartState(Update update) {
-        List<SendMessage> sendMessageList = new ArrayList<>();
-        Long chatId = update.getMessage().getChatId();
+    private void handleStartState(Update update) {
+//        List<SendMessage> sendMessageList = new ArrayList<>();
+        Long chatId = upd;
         String userMessage = update.getMessage().getText();
 
         Usr usr = userRepository.findByChatId(chatId).get();
@@ -342,9 +344,9 @@ public class AdminUserService {
 
         sendMessage.setReplyMarkup(keyboardMarkup);
 
-        sendMessage.setChatId(chatId);
-        sendMessageList.add(sendMessage);
+        telegramApiQueue.addResponse(new ChatBotResponse(chatId, sendMessage));
+//        sendMessageList.add(sendMessage);
         stateManager.setUserState(chatId, BotState.COMMAND_CHOOSING);
-        return sendMessageList;
+//        return sendMessageList;
     }
 }

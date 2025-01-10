@@ -72,25 +72,18 @@ public class TelegramBotService extends TelegramLongPollingBot {
         if (update.hasMessage()) {
             Long chatId = update.getMessage().getChatId();
             BotState currentState = stateManager.getUserState(chatId);
-            SendMessage replyMessage = processMessage(update, currentState);
-
-            sendMessageResponse(replyMessage);
+            processMessage(update, currentState);
         }
     }
 
-    private SendMessage processMessage(Update update, BotState state) {
+    private void processMessage(Update update, BotState state) {
         Long chatId = update.getMessage().getChatId();
-
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId.toString());
 
         if (userRepository.findByChatId(chatId).isEmpty()) {
             processRegistration(update, state);
         } else {
             processTextMessage(update);
         }
-
-        return message;
     }
 
     private void processRegistration(Update update, BotState state) {
@@ -249,19 +242,19 @@ public class TelegramBotService extends TelegramLongPollingBot {
         }
     }
 
-    public void sendMessageResponse(SendMessage sendMessage) {
-        if (sendMessage.getChatId().isEmpty()) {
-            log.error(String.format("""
-                    ChatId is empty. ChatId: ->%s<-""",
-                    sendMessage.getChatId()));
-        }
-        sendMessage.setParseMode("Markdown");
-        try {
-            execute(sendMessage);
-        } catch (TelegramApiException e) {
-            throw new RuntimeException(e);
-        }
-    }
+//    public void sendMessageResponse(SendMessage sendMessage) {
+//        if (sendMessage.getChatId().isEmpty()) {
+//            log.error(String.format("""
+//                    ChatId is empty. ChatId: ->%s<-""",
+//                    sendMessage.getChatId()));
+//        }
+//        sendMessage.setParseMode("Markdown");
+//        try {
+//            execute(sendMessage);
+//        } catch (TelegramApiException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
 
     public void sendSplitTextResponse(Long chatId, String text) {
         int maxMessageLength = 4096;
