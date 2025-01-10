@@ -4,6 +4,8 @@ import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.GetPresignedObjectUrlArgs;
+import io.minio.RemoveObjectArgs;
+import io.minio.errors.MinioException;
 import io.minio.http.Method;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -63,5 +65,21 @@ public class ImageService {
                 .bucket(bucketName)
                 .object(objectName)
                 .build());
+    }
+
+    public void deleteImage(String bucketName, String objectName) {
+        try {
+            minioClient.removeObject(RemoveObjectArgs.builder()
+                    .bucket(bucketName)
+                    .object(objectName)
+                    .build());
+            System.out.println("Изображение успешно удалено из MinIO: " + objectName);
+        } catch (MinioException e) {
+            e.printStackTrace();
+            System.err.println("Ошибка при удалении изображения из MinIO: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("Неизвестная ошибка при удалении изображения из MinIO.");
+        }
     }
 }

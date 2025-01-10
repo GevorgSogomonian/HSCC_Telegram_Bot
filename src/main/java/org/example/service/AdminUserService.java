@@ -12,10 +12,13 @@ import org.example.repository.EventRepository;
 import org.example.repository.UserRepository;
 import org.example.state_manager.StateManager;
 import org.example.telegram_api.TelegramApiQueue;
+import org.example.util.UpdateUtil;
 import org.springframework.stereotype.Service;
+import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -44,12 +47,15 @@ public class AdminUserService {
     private final StateManager stateManager = new StateManager();
     private final ImageService imageService;
     private final TelegramApiQueue telegramApiQueue;
+    private final UpdateUtil updateUtil;
 //    private final TelegramPhotoSender telegramPhotoSender;
 
     public List<SendMessage> onUpdateRecieved(Update update) {
         List<SendMessage> responseMessageList = new ArrayList<>();
 
-        if (update.hasMessage()) {
+        if (update.hasCallbackQuery()) {
+            processCallbackQuery(update);
+        } else if (update.hasMessage()) {
             Long chatId = update.getMessage().getChatId();
             String userMessage = update.getMessage().getText();
             BotState currentState = stateManager.getUserState(chatId);
@@ -85,7 +91,7 @@ public class AdminUserService {
     }
 
     private List<SendMessage> processTextMessage(Update update) {
-        Long chatId = update.getMessage().getChatId();
+        Long chatId = updateUtil.getChatId(update);
         String userMessage = update.getMessage().getText();
 
         return commandHandlers.getOrDefault(userMessage, this::handleStartState).apply(update);
@@ -116,16 +122,16 @@ public class AdminUserService {
                     %s""",
                     event.getEventName(), event.getDescription()));
 
-            InlineKeyboardButton button1 = new InlineKeyboardButton("редактировать");
-            InlineKeyboardButton button2 = new InlineKeyboardButton("удалить");
+            InlineKeyboardButton editButton = new InlineKeyboardButton("редактировать");
+            editButton.setCallbackData("edit_event_" + event.getId());
 
-            button1.setCallbackData("edit");
-            button2.setCallbackData("delete");
+            InlineKeyboardButton deleteButton = new InlineKeyboardButton("удалить");
+            deleteButton.setCallbackData("delete_event_" + event.getId());
 
             InlineKeyboardMarkup inlineKeyboardMarkup = InlineKeyboardMarkup.builder()
                     .clearKeyboard()
-                    .keyboardRow(List.of(button1))
-                    .keyboardRow(List.of(button2))
+                    .keyboardRow(List.of(editButton))
+                    .keyboardRow(List.of(deleteButton))
                     .build();
 
             sendPhoto.setReplyMarkup(inlineKeyboardMarkup);
@@ -304,6 +310,93 @@ public class AdminUserService {
 
         String extension = filePath.substring(filePath.lastIndexOf('.') + 1);
         return mimeTypes.get(extension);
+    }
+
+    private void processCallbackQuery(Update update) {
+        CallbackQuery callbackQuery = update.getCallbackQuery();
+        String callbackData = update.getCallbackQuery().getData();
+        Long chatId = update.getCallbackQuery().getMessage().getChatId();
+
+        if (callbackData.startsWith("delete_event_")) {
+            System.out.println("сработало удаление");
+            Long eventId = Long.parseLong(callbackData.split("_")[2]);
+            handleDeleteEvent(chatId, eventId);
+        } else if (callbackData.startsWith("edit_event_")) {
+            Long eventId = Long.parseLong(callbackData.split("_")[2]);
+            handleEditEvent(chatId, eventId);
+        } else {
+            // Обработка других callback-запросов
+            sendUnknownCallbackResponse(chatId);
+        }
+
+        // Отправляем подтверждение обработки callback-запроса
+        AnswerCallbackQuery answer = new AnswerCallbackQuery();
+        answer.setCallbackQueryId(callbackQuery.getId());
+        answer.setText("Команда обработана.");
+
+        telegramApiQueue.addResponse(new ChatBotResponse(chatId, answer));
+    }
+
+    private void handleDeleteEvent(Long chatId, Long eventId) {
+        Optional<Event> eventOptional = eventRepository.findById(eventId);
+
+        if (eventOptional.isPresent()) {
+            Event event = eventOptional.get();
+
+            // Удаляем изображение из MinIO
+            String imageUrl = event.getImageUrl();
+            if (imageUrl != null && !imageUrl.isBlank()) {
+                String bucketName = "pictures"; // Название bucket (замените на ваше)
+                String objectName = imageUrl.substring(imageUrl.lastIndexOf("/") + 1); // Получаем имя объекта из URL
+                imageService.deleteImage(bucketName, objectName);
+            }
+
+            // Удаляем мероприятие из базы данных
+            eventRepository.delete(event);
+
+            // Отправляем подтверждение пользователю
+            SendMessage confirmationMessage = new SendMessage();
+            confirmationMessage.setChatId(chatId.toString());
+            confirmationMessage.setText("Мероприятие и его изображение успешно удалены!");
+
+            telegramApiQueue.addResponse(new ChatBotResponse(chatId, confirmationMessage));
+        } else {
+            // Отправляем сообщение, если мероприятие не найдено
+            SendMessage errorMessage = new SendMessage();
+            errorMessage.setChatId(chatId.toString());
+            errorMessage.setText("Мероприятие не найдено!");
+
+            telegramApiQueue.addResponse(new ChatBotResponse(chatId, errorMessage));
+        }
+    }
+
+    private void handleEditEvent(Long chatId, Long eventId) {
+//        Optional<Event> eventOptional = eventRepository.findById(eventId);
+//
+//        if (eventOptional.isPresent()) {
+//            SendMessage editMessage = new SendMessage();
+//            editMessage.setChatId(chatId.toString());
+//            editMessage.setText("Введите новые данные для мероприятия:");
+//
+//            stateManager.setUserState(chatId, BotState.EDITING_EVENT);
+//            stateManager.setEventBeingEdited(chatId, eventId);
+//
+//            telegramApiQueue.addResponse(new ChatBotResponse(chatId, editMessage));
+//        } else {
+//            SendMessage errorMessage = new SendMessage();
+//            errorMessage.setChatId(chatId.toString());
+//            errorMessage.setText("Мероприятие не найдено!");
+//
+//            telegramApiQueue.addResponse(new ChatBotResponse(chatId, errorMessage));
+//        }
+    }
+
+    private void sendUnknownCallbackResponse(Long chatId) {
+        SendMessage unknownCallbackMessage = new SendMessage();
+        unknownCallbackMessage.setChatId(chatId.toString());
+        unknownCallbackMessage.setText("Неизвестная команда.");
+
+        telegramApiQueue.addResponse(new ChatBotResponse(chatId, unknownCallbackMessage));
     }
 
     private List<SendMessage> handleStartState(Update update) {

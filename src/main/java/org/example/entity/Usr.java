@@ -25,4 +25,6 @@ public class Usr {
     private String languageCode; // Код языка пользователя (например, "ru", "en")
     private Boolean isPremium; // Информация о премиум-аккаунте
     private Boolean isBot; // Является ли пользователь ботом
+    private UserState userState;
+    private Boolean registered;
 }

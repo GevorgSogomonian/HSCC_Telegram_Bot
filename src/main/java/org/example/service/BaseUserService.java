@@ -10,6 +10,7 @@ import org.example.repository.EventRepository;
 import org.example.repository.UserRepository;
 import org.example.state_manager.StateManager;
 import org.example.telegram_api.TelegramApiQueue;
+import org.example.util.UpdateUtil;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
@@ -34,6 +35,7 @@ public class BaseUserService {
 
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
+    private final UpdateUtil updateUtil;
 
     private final Map<String, Function<Update, List<SendMessage>>> commandHandlers = new HashMap<>();
     private final StateManager stateManager = new StateManager();
@@ -44,8 +46,8 @@ public class BaseUserService {
         List<SendMessage> responseMessageList = new ArrayList<>();
 
         if (update.hasMessage() && update.getMessage().hasText()) {
-            Long chatId = update.getMessage().getChatId();
-            String userMessage = update.getMessage().getText();
+            Long chatId = updateUtil.getChatId(update);
+//            String userMessage = update.getMessage().getText();
             BotState currentState = stateManager.getUserState(chatId);
             responseMessageList = processMessage(update, currentState);
         }
