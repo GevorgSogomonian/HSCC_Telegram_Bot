@@ -1,24 +1,25 @@
 package org.example.util;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class MockMultipartFile implements MultipartFile {
 
-    private final String name;
-    private final String originalFilename;
-    private final String contentType;
-    private final byte[] content;
-
-    public MockMultipartFile(String name, String originalFilename, String contentType, InputStream contentStream) throws IOException {
-        this.name = name;
-        this.originalFilename = originalFilename;
-        this.contentType = contentType;
-        this.content = contentStream.readAllBytes();
-    }
+    private String name;
+    private String originalFileName;
+    private String contentType;
+    private byte[] fileContent;
 
     @Override
     public String getName() {
@@ -27,7 +28,7 @@ public class MockMultipartFile implements MultipartFile {
 
     @Override
     public String getOriginalFilename() {
-        return originalFilename;
+        return originalFileName;
     }
 
     @Override
@@ -37,22 +38,22 @@ public class MockMultipartFile implements MultipartFile {
 
     @Override
     public boolean isEmpty() {
-        return content.length == 0;
+        return fileContent.length == 0;
     }
 
     @Override
     public long getSize() {
-        return content.length;
+        return fileContent.length;
     }
 
     @Override
     public byte[] getBytes() throws IOException {
-        return content;
+        return fileContent;
     }
 
     @Override
     public InputStream getInputStream() throws IOException {
-        return new ByteArrayInputStream(content);
+        return new ByteArrayInputStream(fileContent);
     }
 
     @Override

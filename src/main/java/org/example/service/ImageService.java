@@ -4,6 +4,8 @@ import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.GetPresignedObjectUrlArgs;
+import io.minio.RemoveObjectArgs;
+import io.minio.errors.MinioException;
 import io.minio.http.Method;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,29 +20,31 @@ import java.util.UUID;
 public class ImageService {
 
     private final MinioClient minioClient;
+    private final ResizeService resizeService;
 
     @Value("${spring.minio.bucketName}")
     private String bucketName;
 
-    public ImageService(MinioClient minioClient) {
+    public ImageService(MinioClient minioClient, ResizeService resizeService) {
         this.minioClient = minioClient;
+        this.resizeService = resizeService;
     }
 
     public String uploadImage(MultipartFile file) throws Exception {
         String fileName = UUID.randomUUID() + "-" + file.getOriginalFilename();
-
-        try (InputStream inputStream = file.getInputStream()) {
+        MultipartFile resizedImage = resizeService.resizeImage(file);
+        try (InputStream inputStream = resizedImage.getInputStream()) {
             log.info(String.format("""
                     Размер файла в байтах: %s
                     Тип файла: %s
                     Имя файла: %s""",
-                    file.getSize(), file.getContentType(), fileName));
+                    resizedImage.getSize(), resizedImage.getContentType(), fileName));
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(bucketName)
                             .object(fileName)
-                            .stream(inputStream, file.getSize(), -1)
-                            .contentType(file.getContentType())
+                            .stream(inputStream, resizedImage.getSize(), -1)
+                            .contentType(resizedImage.getContentType())
                             .build()
             );
         }
@@ -58,10 +62,26 @@ public class ImageService {
         );
     }
 
-    public InputStream getFile(String bucketName, String objectName) throws Exception {
+    public InputStream getFile(String bucketName, String objectUrl) throws Exception {
         return minioClient.getObject(GetObjectArgs.builder()
                 .bucket(bucketName)
-                .object(objectName)
+                .object(objectUrl)
                 .build());
+    }
+
+    public void deleteImage(String bucketName, String objecUrl) {
+        try {
+            minioClient.removeObject(RemoveObjectArgs.builder()
+                    .bucket(bucketName)
+                    .object(objecUrl)
+                    .build());
+            System.out.println("Изображение успешно удалено из MinIO: " + objecUrl);
+        } catch (MinioException e) {
+            e.printStackTrace();
+            System.err.println("Ошибка при удалении изображения из MinIO: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("Неизвестная ошибка при удалении изображения из MinIO.");
+        }
     }
 }

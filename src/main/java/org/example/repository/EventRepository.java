@@ -10,4 +10,6 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     Optional<Event> findByEventName(String eventName);
 
     Optional<Event> findFirstByCreatorChatIdOrderByUpdatedAtDesc(Long creatorChatId);
+
+    Optional<Event> findById(Long id);
 }

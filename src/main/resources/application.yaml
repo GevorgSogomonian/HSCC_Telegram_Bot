@@ -18,3 +18,8 @@ spring:
     accessKey: minioadmin
     secretKey: minioadmin
     bucketName: pictures
+
+image:
+  maxSizeHorizontal: 900
+  maxSizeHeight: 900
+  maxSizeSquare: 900

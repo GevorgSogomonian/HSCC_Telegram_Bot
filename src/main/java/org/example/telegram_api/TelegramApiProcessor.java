@@ -58,7 +58,7 @@ public class TelegramApiProcessor {
                                 fileName,
                                 filePath,
                                 mimeType,
-                                fileStream
+                                fileStream.readAllBytes()
                         );
 
                         // Загружаем изображение и обновляем мероприятие
@@ -85,8 +85,10 @@ public class TelegramApiProcessor {
                     PartialBotApiMethod<?> method = chatBotResponse.getMethod();
 
                     if (method instanceof SendPhoto sendPhoto) {
+                        sendPhoto.setParseMode("Markdown");
                         telegramBotService.execute(sendPhoto);
                     } else if (method instanceof SendMessage sendMessage) {
+                        sendMessage.setParseMode("Markdown");
                         telegramBotService.execute(sendMessage);
                     }
 

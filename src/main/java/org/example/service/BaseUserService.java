@@ -90,7 +90,6 @@ public class BaseUserService {
             InputFile inputFile = new InputFile(fileStream, event.getImageUrl());
             sendPhoto.setChatId(chatId.toString());
             sendPhoto.setPhoto(inputFile);
-            sendPhoto.setParseMode("Markdown");
 
             InlineKeyboardButton button = new InlineKeyboardButton("Подписаться");
             button.setCallbackData("регистрация события в google calendar");
