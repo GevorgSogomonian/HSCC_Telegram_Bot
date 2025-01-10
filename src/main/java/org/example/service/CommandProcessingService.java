@@ -17,17 +17,6 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 public class CommandProcessingService {
     private final UserRepository userRepository;
 
-    private static final Logger logger = LoggerFactory.getLogger(CommandProcessingService.class);
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-
-    private String truncateDescription(String description) {
-        int maxLength = 2000;
-        if (description != null && description.length() > maxLength) {
-            return description.substring(0, maxLength) + "...";
-        }
-        return description != null ? description : "Описание недоступно.";
-    }
-
     public void saveNewUser(Update update, Role role) {
         Long chatId = update.getMessage().getChatId();
         org.telegram.telegrambots.meta.api.objects.User fromUser = update.getMessage().getFrom();

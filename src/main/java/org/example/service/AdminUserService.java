@@ -12,6 +12,7 @@ import org.example.repository.EventRepository;
 import org.example.repository.UserRepository;
 import org.example.state_manager.StateManager;
 import org.example.telegram_api.TelegramApiQueue;
+import org.example.util.UpdateUtil;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -40,7 +41,7 @@ public class AdminUserService {
 
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
-    private final Up
+    private final UpdateUtil updateUtil;
 
     private final Map<String, Consumer<Update>> commandHandlers = new HashMap<>();
     private final StateManager stateManager = new StateManager();
@@ -53,31 +54,20 @@ public class AdminUserService {
 
         if (update.hasMessage()) {
             Long chatId = update.getMessage().getChatId();
-            String userMessage = update.getMessage().getText();
+//            String userMessage = update.getMessage().getText();
             BotState currentState = stateManager.getUserState(chatId);
-            responseMessageList = processMessage(update, currentState);
+            processMessage(update, currentState);
         }
-
-        return responseMessageList;
     }
 
     public void processMessage(Update update, BotState state) {
-        Long chatId = update.getMessage().getChatId();
-
-        List<SendMessage> responseMessageList = new ArrayList<>();
-
-        responseMessageList = switch (state) {
+        switch (state) {
             case START -> handleStartState(update);
             case ENTERING_EVENT_NAME -> eventNameCheck(update);
             case ENTERING_EVENT_DESCRIPTION -> eventDescriptionCheck(update);
             case ENTERING_EVENT_PICTURE -> eventPictureCheck(update);
             case COMMAND_CHOOSING -> processTextMessage(update);
-            default -> responseMessageList;
         };
-
-        responseMessageList.forEach(responseMessage -> responseMessage.setChatId(chatId));
-
-        return responseMessageList;
     }
 
     @PostConstruct
@@ -87,10 +77,8 @@ public class AdminUserService {
     }
 
     private void processTextMessage(Update update) {
-        Long chatId = update.getMessage().getChatId();
         String userMessage = update.getMessage().getText();
-
-        commandHandlers.getOrDefault(userMessage, this::handleStartState).apply(update);
+        commandHandlers.getOrDefault(userMessage, this::handleStartState).accept(update);
     }
 
     private List<SendMessage> handleAllEventsCommand(Update update) {
@@ -155,9 +143,9 @@ public class AdminUserService {
         return sendMessageList;
     }
 
-    private List<SendMessage> eventNameCheck(Update update) {
-        List<SendMessage> sendMessageList = new ArrayList<>();
-        Long chatId = update.getMessage().getChatId();
+    private void eventNameCheck(Update update) {
+//        List<SendMessage> sendMessageList = new ArrayList<>();
+        Long chatId = updateUtil.getChatId(update);
         String userMessage = update.getMessage().getText();
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId);
@@ -187,19 +175,18 @@ public class AdminUserService {
             stateManager.setUserState(chatId, BotState.ENTERING_EVENT_DESCRIPTION);
         }
 
-        sendMessageList.add(sendMessage);
-        sendMessageList.add(SendMessage.builder()
-                        .chatId(chatId)
-                        .text("""
+        telegramApiQueue.addResponse(new ChatBotResponse(chatId, sendMessage));
+//        sendMessageList.add(sendMessage);
+        telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
+                .chatId(chatId)
+                .text("""
                                 Введите описание мероприятия:""")
-                .build());
-
-        return sendMessageList;
+                .build()));
     }
 
-    private List<SendMessage> eventDescriptionCheck(Update update) {
-        List<SendMessage> sendMessageList = new ArrayList<>();
-        Long chatId = update.getMessage().getChatId();
+    private void eventDescriptionCheck(Update update) {
+//        List<SendMessage> sendMessageList = new ArrayList<>();
+        Long chatId = updateUtil.getChatId(update);
         String userMessage = update.getMessage().getText();
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId);
@@ -225,13 +212,12 @@ public class AdminUserService {
         }
 
 
-        sendMessageList.add(sendMessage);
-        sendMessageList.add(SendMessage.builder()
+        telegramApiQueue.addResponse(new ChatBotResponse(chatId, sendMessage));
+        telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
                 .chatId(chatId)
                 .text("""
                                 Пришлите обложку мероприятия:""")
-                .build());
-
+                .build()));
 //        sendMessageList.add(sendMessage);
 //        sendMessageList.add(SendMessage.builder()
 //                        .chatId(chatId)
@@ -242,12 +228,11 @@ public class AdminUserService {
 //                .build());
 
 //        sendMessageList.addAll(handleStartState(update));
-        return sendMessageList;
     }
 
-    private List<SendMessage> eventPictureCheck(Update update) {
-        List<SendMessage> sendMessageList = new ArrayList<>();
-        Long chatId = update.getMessage().getChatId();
+    private void eventPictureCheck(Update update) {
+//        List<SendMessage> sendMessageList = new ArrayList<>();
+        Long chatId = updateUtil.getChatId(update);
 
         if (update.hasMessage()) {
             String fileType = "";
@@ -259,12 +244,11 @@ public class AdminUserService {
                 fileType = update.getMessage().getDocument().getMimeType();
             }
             if (fileType == null) {
-                sendMessageList.add(SendMessage.builder()
-                                .chatId(chatId)
-                                .text("""
+                telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
+                        .chatId(chatId)
+                        .text("""
                                         Отправьте изображение файлом или быстрым способом!""")
-                        .build());
-                return sendMessageList;
+                        .build()));
             }
 
             try {
@@ -273,26 +257,24 @@ public class AdminUserService {
 
                 // Обработка ответа должна происходить асинхронно в другом месте,
                 // например, в обработчике очереди
-                sendMessageList.add(SendMessage.builder()
+                telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
                         .chatId(chatId)
                         .text("Запрос на получение изображения отправлен. Пожалуйста, подождите.")
-                        .build());
+                        .build()));
 
                 stateManager.setUserState(chatId, BotState.COMMAND_CHOOSING);
             } catch (Exception e) {
-                sendMessageList.add(SendMessage.builder()
+                telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
                         .chatId(chatId)
                         .text("Ошибка при добавлении запроса в очередь: " + e.getMessage())
-                        .build());
+                        .build()));
             }
         } else {
-            sendMessageList.add(SendMessage.builder()
+            telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
                     .chatId(chatId)
                     .text("Пожалуйста, отправьте изображение для обложки мероприятия.")
-                    .build());
+                    .build()));
         }
-
-        return sendMessageList;
     }
 
     private String getMimeTypeByExtension(String filePath) {
@@ -310,10 +292,10 @@ public class AdminUserService {
 
     private void handleStartState(Update update) {
 //        List<SendMessage> sendMessageList = new ArrayList<>();
-        Long chatId = upd;
-        String userMessage = update.getMessage().getText();
+        Long chatId = updateUtil.getChatId(update);
+//        String userMessage = update.getMessage().getText();
 
-        Usr usr = userRepository.findByChatId(chatId).get();
+        Usr usr = updateUtil.getUser(update).get();
 
         System.out.println("Пользователь-админ уже зарегистрирован: " + usr.getUsername());
 

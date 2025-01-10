@@ -10,6 +10,7 @@ import org.example.repository.EventRepository;
 import org.example.repository.UserRepository;
 import org.example.state_manager.StateManager;
 import org.example.telegram_api.TelegramApiQueue;
+import org.example.util.UpdateUtil;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 @Service
@@ -34,39 +36,27 @@ public class BaseUserService {
 
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
+    private final UpdateUtil updateUtil;
 
-    private final Map<String, Function<Update, List<SendMessage>>> commandHandlers = new HashMap<>();
+    private final Map<String, Consumer<Update>> commandHandlers = new HashMap<>();
     private final StateManager stateManager = new StateManager();
     private final ImageService imageService;
     private final TelegramApiQueue telegramApiQueue;
 
-    public List<SendMessage> onUpdateRecieved(Update update) {
-        List<SendMessage> responseMessageList = new ArrayList<>();
-
+    public void onUpdateRecieved(Update update) {
         if (update.hasMessage() && update.getMessage().hasText()) {
             Long chatId = update.getMessage().getChatId();
-            String userMessage = update.getMessage().getText();
+//            String userMessage = update.getMessage().getText();
             BotState currentState = stateManager.getUserState(chatId);
-            responseMessageList = processMessage(update, currentState);
+            processMessage(update, currentState);
         }
-
-        return responseMessageList;
     }
 
-    public List<SendMessage> processMessage(Update update, BotState state) {
-        Long chatId = update.getMessage().getChatId();
-
-        List<SendMessage> responseMessageList = new ArrayList<>();
-
-        responseMessageList = switch (state) {
+    public void processMessage(Update update, BotState state) {
+        switch (state) {
             case START -> handleStartState(update);
             case COMMAND_CHOOSING -> processTextMessage(update);
-            default -> responseMessageList;
-        };
-
-        responseMessageList.forEach(responseMessage -> responseMessage.setChatId(chatId));
-
-        return responseMessageList;
+        }
     }
 
     @PostConstruct
@@ -74,23 +64,17 @@ public class BaseUserService {
         commandHandlers.put("Актуальные мероприятия", this::handleActualEventsCommand);
     }
 
-    private List<SendMessage> processTextMessage(Update update) {
-        Long chatId = update.getMessage().getChatId();
+    private void processTextMessage(Update update) {
         String userMessage = update.getMessage().getText();
-
-        return commandHandlers.getOrDefault(userMessage, this::handleStartState).apply(update);
+        commandHandlers.getOrDefault(userMessage, this::handleStartState).accept(update);
     }
 
-    private List<SendMessage> handleActualEventsCommand(Update update) {
-        List<SendMessage> sendMessageList = new ArrayList<>();
-        Long chatId = update.getMessage().getChatId();
-        String userMessage = update.getMessage().getText();
-
+    private void handleActualEventsCommand(Update update) {
+        Long chatId = updateUtil.getChatId(update);
         List<Event> allEvents = eventRepository.findAll();
 
         allEvents.forEach(event -> {
             SendPhoto sendPhoto = new SendPhoto();
-
             sendPhoto.setCaption(String.format("""
                     *%s*:
                     
@@ -122,15 +106,11 @@ public class BaseUserService {
         });
 
 //        sendMessageList.addAll(handleStartState(update));
-        return sendMessageList;
     }
 
-    private List<SendMessage> handleStartState(Update update) {
-        List<SendMessage> sendMessageList = new ArrayList<>();
-        Long chatId = update.getMessage().getChatId();
-        String userMessage = update.getMessage().getText();
-
-        Usr usr = userRepository.findByChatId(chatId).get();
+    private void handleStartState(Update update) {
+        Long chatId = updateUtil.getChatId(update);
+        Usr usr = updateUtil.getUser(update).get();
 
         System.out.println("Пользователь-админ уже зарегистрирован: " + usr.getUsername());
 
@@ -162,8 +142,7 @@ public class BaseUserService {
         sendMessage.setReplyMarkup(keyboardMarkup);
 
         sendMessage.setChatId(chatId);
-        sendMessageList.add(sendMessage);
+        telegramApiQueue.addResponse(new ChatBotResponse(chatId, sendMessage));
         stateManager.setUserState(chatId, BotState.COMMAND_CHOOSING);
-        return sendMessageList;
     }
 }

@@ -3,6 +3,7 @@ package org.example.service;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.dto.ChatBotResponse;
 import org.example.entity.BotState;
 import org.example.entity.Event;
 import org.example.entity.Role;
@@ -11,6 +12,7 @@ import org.example.repository.EventRepository;
 import org.example.repository.UserRepository;
 import org.example.state_manager.StateManager;
 import org.example.telegram_api.TelegramApiQueue;
+import org.example.util.UpdateUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -36,14 +38,13 @@ import java.util.function.Consumer;
 @RequiredArgsConstructor
 public class TelegramBotService extends TelegramLongPollingBot {
 
-    private final Map<String, String> waitingForInput = new ConcurrentHashMap<>();
     private final CommandProcessingService commandProcessingService;
     private final UserRepository userRepository;
     private final StateManager stateManager = new StateManager();
-    private final EventRepository eventRepository;
     private final BaseUserService baseUserService;
     private final AdminUserService adminUserService;
     private final TelegramApiQueue telegramApiQueue;
+    private final UpdateUtil updateUtil;
 
     @Value("${spring.telegram.bot.username}")
     private String botUsername;
@@ -69,17 +70,15 @@ public class TelegramBotService extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        if (update.hasMessage()) {
-            Long chatId = update.getMessage().getChatId();
+        if (update.hasMessage() || update.hasCallbackQuery()) {
+            Long chatId = updateUtil.getChatId(update);
             BotState currentState = stateManager.getUserState(chatId);
             processMessage(update, currentState);
         }
     }
 
     private void processMessage(Update update, BotState state) {
-        Long chatId = update.getMessage().getChatId();
-
-        if (userRepository.findByChatId(chatId).isEmpty()) {
+        if (updateUtil.getUser(update).isEmpty()) {
             processRegistration(update, state);
         } else {
             processTextMessage(update);
@@ -111,61 +110,18 @@ public class TelegramBotService extends TelegramLongPollingBot {
     }
 
     private void processTextMessage(Update update) {
-        List<SendMessage> sendMessageList;
-
-        Long chatId = update.getMessage().getChatId();
+        Long chatId = updateUtil.getChatId(update);
         Role userRole = userRepository.findByChatId(chatId).get().getRole();
 
-        sendMessageList = switch (userRole) {
+        switch (userRole) {
             case ADMIN -> adminUserService.onUpdateRecieved(update);
             case USER -> baseUserService.onUpdateRecieved(update);
-        };
-
-        sendMessageList.forEach(this::sendMessageResponse);
-    }
-
-    private String truncateDescription(String description) {
-        int maxLength = 500;
-        if (description != null && description.length() > maxLength) {
-            return description.substring(0, maxLength) + "...";
         }
-        return description != null ? description : "Описание недоступно.";
-    }
-
-    private void handleUnknownCommand(Update update) {
-        SendMessage message = new SendMessage();
-        message.setChatId(update.getMessage().getChatId().toString());
-        message.setText("Выберите действие:");
-
-        ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
-        keyboardMarkup.setResizeKeyboard(true);
-
-        List<KeyboardRow> keyboardRows = new ArrayList<>();
-
-        KeyboardRow row1 = new KeyboardRow();
-        row1.add(new KeyboardButton("🌀 Случайный фильм"));
-
-        KeyboardRow row2 = new KeyboardRow();
-        row2.add(new KeyboardButton("🎬 Популярные фильмы"));
-
-        keyboardRows.add(row1);
-        keyboardRows.add(row2);
-
-        keyboardMarkup.setKeyboard(keyboardRows);
-
-        message.setReplyMarkup(keyboardMarkup);
-
-        try {
-            execute(message);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        ;
     }
 
     private void handleStartState(Update update) {
-        Long chatId = update.getMessage().getChatId();
-
-        Optional<Usr> usrOptional = userRepository.findByChatId(chatId);
+        Optional<Usr> usrOptional = updateUtil.getUser(update);
 
         if (usrOptional.isPresent()) {
             Usr usr = usrOptional.get();
@@ -178,32 +134,35 @@ public class TelegramBotService extends TelegramLongPollingBot {
     }
 
     private void startRegisterNewUser(Update update) {
-        Long chatId = update.getMessage().getChatId();
+        Long chatId = updateUtil.getChatId(update);
 
         if (update.hasMessage() && update.getMessage().getFrom() != null) {
-            User fromUser = update.getMessage().getFrom();
-
-            sendSplitTextResponse(chatId, """
-                    Давайте начнём регистрацию!
-                    
-                    Выберите свою роль:
-                    (admin)
-                    (usr)
-                
-                    ps: чтобы стать администратором вам нужен специальный ключ!""");
-
+            telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                            Давайте начнём регистрацию!
+                            
+                            Выберите свою роль:
+                            (admin)
+                            (usr)
+                            
+                            ps: чтобы стать администратором вам нужен специальный ключ!""")
+                    .build()));
             stateManager.setUserState(chatId, BotState.CHOOSING_ROLE);
         }
     }
 
     private void roleChooser(Update update) {
-        Long chatId = update.getMessage().getChatId();
+        Long chatId = updateUtil.getChatId(update);
         String userMessage = update.getMessage().getText();
 
         switch (userMessage) {
             case "admin":
-                sendSplitTextResponse(chatId, """
-                Введите специальный ключ:""");
+                telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
+                        .chatId(chatId)
+                        .text("""
+                                Введите специальный ключ:""")
+                        .build()));
                 stateManager.setUserState(chatId, BotState.ENTERING_SPECIAL_KEY);
                 break;
 
@@ -214,66 +173,37 @@ public class TelegramBotService extends TelegramLongPollingBot {
                 break;
 
             default:
-                sendSplitTextResponse(chatId, """
-                Введите корректные данные.""");
+                telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
+                        .chatId(chatId)
+                        .text("""
+                                Введите корректные данные.""")
+                        .build()));
         }
     }
 
     private void adminPasswordCheck(Update update) {
         String message = update.getMessage().getText();
-        Long chatId = update.getMessage().getChatId();
+        Long chatId = updateUtil.getChatId(update);
 
-        switch (message) {
-            case "1234":
-                sendSplitTextResponse(chatId, """
-                Ключ верный.""");
-                commandProcessingService.saveNewUser(update, Role.ADMIN);
+        if (message.equals("1234")) {
+            telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                            Ключ верный.""")
+                    .build()));
+            commandProcessingService.saveNewUser(update, Role.ADMIN);
 
-                stateManager.removeUserState(chatId);
-                processTextMessage(update);
-                break;
-
-            default:
-                sendSplitTextResponse(chatId, """
-                Ключ неверный.
-                
-                Начните регистрацию заново)""");
-                startRegisterNewUser(update);
-        }
-    }
-
-//    public void sendMessageResponse(SendMessage sendMessage) {
-//        if (sendMessage.getChatId().isEmpty()) {
-//            log.error(String.format("""
-//                    ChatId is empty. ChatId: ->%s<-""",
-//                    sendMessage.getChatId()));
-//        }
-//        sendMessage.setParseMode("Markdown");
-//        try {
-//            execute(sendMessage);
-//        } catch (TelegramApiException e) {
-//            throw new RuntimeException(e);
-//        }
-//    }
-
-    public void sendSplitTextResponse(Long chatId, String text) {
-        int maxMessageLength = 4096;
-        for (int i = 0; i < text.length(); i += maxMessageLength) {
-            String part = text.substring(i, Math.min(text.length(), i + maxMessageLength));
-            sendResponse(chatId, part);
-        }
-    }
-
-    public void sendResponse(Long chatId, String text) {
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId);
-        message.setText(text);
-
-        message.setParseMode("Markdown");
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
+            stateManager.removeUserState(chatId);
+            processTextMessage(update);
+        } else {
+            telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                            Ключ неверный.
+                            
+                            Начните регистрацию заново)""")
+                    .build()));
+            startRegisterNewUser(update);
         }
     }
 }
