@@ -1,37 +1,25 @@
-package org.example.service;
+package org.example.telegram;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.admin.AdminUserService;
+import org.example.base_user.BaseUserService;
 import org.example.dto.ChatBotResponse;
 import org.example.entity.BotState;
-import org.example.entity.Event;
 import org.example.entity.Role;
 import org.example.entity.Usr;
-import org.example.repository.EventRepository;
 import org.example.repository.UserRepository;
 import org.example.state_manager.StateManager;
-import org.example.telegram_api.TelegramApiQueue;
+import org.example.telegram.api.TelegramApiQueue;
 import org.example.util.UpdateUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
-import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.User;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
 
 @Service
 @Slf4j

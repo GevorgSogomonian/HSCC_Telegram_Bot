@@ -1,4 +1,4 @@
-package org.example.telegram_api;
+package org.example.telegram.api;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -8,8 +8,8 @@ import org.example.dto.ChatBotResponse;
 import org.example.entity.Event;
 import org.example.repository.EventRepository;
 import org.example.repository.UserRepository;
-import org.example.service.ImageService;
-import org.example.service.TelegramBotService;
+import org.example.util.image.ImageService;
+import org.example.telegram.TelegramBotService;
 import org.example.util.MockMultipartFile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,8 +20,6 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Map;
 
 @Component

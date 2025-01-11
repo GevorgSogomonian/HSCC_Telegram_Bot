@@ -1,6 +1,6 @@
 package org.example;
 
-import org.example.service.TelegramBotService;
+import org.example.telegram.TelegramBotService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

@@ -1,12 +1,9 @@
-package org.example.telegram_api;
+package org.example.telegram.api;
 
 import org.example.dto.ChatBotRequest;
 import org.example.dto.ChatBotResponse;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
