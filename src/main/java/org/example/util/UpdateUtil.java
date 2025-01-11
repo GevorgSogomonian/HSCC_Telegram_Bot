@@ -21,9 +21,18 @@ public class UpdateUtil {
         }
     }
 
+    public String getFileId(Update update) {
+        if (update.getMessage().hasPhoto()) {
+            return  update.getMessage().getPhoto().get(0).getFileId();
+        } else if (update.getMessage().hasDocument()) {
+            return update.getMessage().getDocument().getFileId();
+        } else {
+            return "";
+        }
+    }
+
     public Optional<Usr> getUser(Update update) {
         Long chatId = getChatId(update);
-
         return userRepository.findByChatId(chatId);
     }
 }

@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 @Slf4j
 @Service
@@ -69,7 +68,10 @@ public class AdminUserService {
             case ENTERING_EVENT_DESCRIPTION -> eventDescriptionCheck(update);
             case ENTERING_EVENT_PICTURE -> eventPictureCheck(update);
             case COMMAND_CHOOSING -> processTextMessage(update);
-        };
+            case EDITING_EVENT_NAME -> checkEditedEventName(update);
+            case EDITING_EVENT_DESCRIPTION -> checkEditedEventDescription(update);
+            case EDITING_EVENT_PICTURE -> checkEditedEventPicture(update);
+        }
     }
 
     @PostConstruct
@@ -143,24 +145,198 @@ public class AdminUserService {
     }
 
     private void handleEditEvent(Long chatId, Long eventId) {
-//        Optional<Event> eventOptional = eventRepository.findById(eventId);
+        Optional<Event> eventOptional = eventRepository.findById(eventId);
 //
-//        if (eventOptional.isPresent()) {
-//            SendMessage editMessage = new SendMessage();
-//            editMessage.setChatId(chatId.toString());
-//            editMessage.setText("Введите новые данные для мероприятия:");
-//
-//            stateManager.setUserState(chatId, BotState.EDITING_EVENT);
-//            stateManager.setEventBeingEdited(chatId, eventId);
-//
-//            telegramApiQueue.addResponse(new ChatBotResponse(chatId, editMessage));
-//        } else {
-//            SendMessage errorMessage = new SendMessage();
-//            errorMessage.setChatId(chatId.toString());
-//            errorMessage.setText("Мероприятие не найдено!");
-//
-//            telegramApiQueue.addResponse(new ChatBotResponse(chatId, errorMessage));
-//        }
+        if (eventOptional.isPresent()) {
+            telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                            Текущее название:""")
+                    .build()));
+            telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text(String.format("""
+                            *%s*""", eventOptional.get().getEventName()))
+                    .build()));
+            telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                            Введите новое название для мероприятия:""")
+                    .build()));
+            stateManager.setUserState(chatId, BotState.EDITING_EVENT_NAME);
+            stateManager.setEventBeingEdited(chatId, eventId);
+        } else {
+            SendMessage errorMessage = new SendMessage();
+            errorMessage.setChatId(chatId.toString());
+            errorMessage.setText("Мероприятие не найдено!");
+
+            telegramApiQueue.addResponse(new ChatBotResponse(chatId, errorMessage));
+        }
+    }
+
+    private void checkEditedEventName(Update update) {
+        Long chatId = updateUtil.getChatId(update);
+        String userMessage = update.getMessage().getText();
+        int maxNameLength = 120;
+        Long eventId = stateManager.getEventBeingEdited(chatId);
+        Optional<Event> eventOptional = eventRepository.findById(eventId);
+
+        if (userMessage.isBlank()) {
+            telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                        Название мероприятия не может быть пустым(""")
+                    .build()));
+        } else if (userMessage.length() > maxNameLength) {
+            telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text(String.format("""
+                    Название мероприятия не может быть больше *%s* символов(""",
+                            maxNameLength))
+                    .build()));
+        } else if (eventOptional.isEmpty()) {
+            telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                        Мероприятие не найдено!""")
+                    .build()));
+        } else if (!eventOptional.get().getId().equals(eventId)) {
+            telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text(String.format("""
+                    Мероприятие с названием: *%s* уже существует.
+                    
+                    В разделе 'Все мероприятия' вы можете удалять и редактировать свои мероприятия""", userMessage))
+                    .build()));
+        } else {
+            Event editedEvent = eventOptional.get();
+            editedEvent.setEventName(userMessage);
+
+            eventRepository.save(editedEvent);
+            telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                        Отлично! Название сохранено!""")
+                    .build()));
+
+            telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                        Текущее описание:""")
+                    .build()));
+
+            telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text(String.format("""
+                        %s""", editedEvent.getDescription()))
+                    .build()));
+
+            telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                                Введите новое описание мероприятия:""")
+                    .build()));
+
+            stateManager.setUserState(chatId, BotState.EDITING_EVENT_DESCRIPTION);
+        }
+    }
+
+    private void checkEditedEventDescription(Update update) {
+        Long chatId = updateUtil.getChatId(update);
+        String userMessage = update.getMessage().getText();
+        int maxDescriptioonLength = 2000;
+
+        Optional<Event> eventOptional = eventRepository.findFirstByCreatorChatIdOrderByUpdatedAtDesc(chatId);
+
+        if (userMessage.isBlank()) {
+            telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                            Описание мероприятия не может быть пустым(""")
+                    .build()));
+        } else if (userMessage.length() > maxDescriptioonLength) {
+            telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text(String.format("""
+                    Описание мероприятия не может быть больше %s символов(""",
+                            maxDescriptioonLength))
+                    .build()));
+        } else {
+            Event event = eventOptional.get();
+            event.setDescription(userMessage);
+
+            eventRepository.save(event);
+            telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                            Отлично! Новое описание мероприятия сохранено!""")
+                    .build()));
+
+            telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                                Текущая обложка:""")
+                    .build()));
+
+            InputStream fileStream = null;
+            try {
+                fileStream = imageService.getFile("pictures", event.getImageUrl());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+            InputFile inputFile = new InputFile(fileStream, event.getImageUrl());
+
+            telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendPhoto.builder()
+                    .chatId(chatId)
+                    .photo(inputFile)
+                    .build()));
+
+            telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                                Пришлите новую обложку мероприятия:""")
+                    .build()));
+
+            stateManager.setUserState(chatId, BotState.EDITING_EVENT_PICTURE);
+        }
+    }
+
+    private void checkEditedEventPicture(Update update) {
+        Long chatId = updateUtil.getChatId(update);
+
+        if (update.getMessage().hasDocument()) {
+            String fileId = updateUtil.getFileId(update);
+            try {
+                Event event = eventRepository.findFirstByCreatorChatIdOrderByUpdatedAtDesc(chatId).get();
+                String imageUrl = event.getImageUrl();
+                if (imageUrl != null && !imageUrl.isBlank()) {
+                    String bucketName = "pictures";
+                    imageService.deleteImage(bucketName, imageUrl);
+                }
+
+                telegramApiQueue.addRequest(new ChatBotRequest(chatId, new GetFile(fileId)));
+
+                telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
+                        .chatId(chatId)
+                        .text("Новое изображение успешно сохранено.")
+                        .build()));
+
+                stateManager.doneEventEditing(chatId);
+                stateManager.setUserState(chatId, BotState.COMMAND_CHOOSING);
+                handleStartState(update);
+            } catch (Exception e) {
+                telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
+                        .chatId(chatId)
+                        .text("Ошибка при добавлении запроса в очередь: " + e.getMessage())
+                        .build()));
+            }
+        } else {
+            telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("Пожалуйста, отправьте изображение для обложки мероприятия файлом.")
+                    .build()));
+        }
     }
 
     private void sendUnknownCallbackResponse(Long chatId) {
@@ -181,6 +357,7 @@ public class AdminUserService {
                     .text("""
                             Мероприятий нет.""")
                     .build()));
+            handleStartState(update);
 
             return;
         }
@@ -239,7 +416,6 @@ public class AdminUserService {
     }
 
     private void eventNameCheck(Update update) {
-//        List<SendMessage> sendMessageList = new ArrayList<>();
         Long chatId = updateUtil.getChatId(update);
         String userMessage = update.getMessage().getText();
         SendMessage sendMessage = new SendMessage();
@@ -280,7 +456,6 @@ public class AdminUserService {
     }
 
     private void eventDescriptionCheck(Update update) {
-//        List<SendMessage> sendMessageList = new ArrayList<>();
         Long chatId = updateUtil.getChatId(update);
         String userMessage = update.getMessage().getText();
         SendMessage sendMessage = new SendMessage();
@@ -313,45 +488,16 @@ public class AdminUserService {
                 .text("""
                                 Пришлите обложку мероприятия:""")
                 .build()));
-//        sendMessageList.add(sendMessage);
-//        sendMessageList.add(SendMessage.builder()
-//                        .chatId(chatId)
-//                        .text("""
-//                                Поздравляю! Вы создали новое мероприятие!
-//
-//                                Теперь его смогут увидеть обычные пользователи.""")
-//                .build());
-
-//        sendMessageList.addAll(handleStartState(update));
     }
 
     private void eventPictureCheck(Update update) {
-//        List<SendMessage> sendMessageList = new ArrayList<>();
         Long chatId = updateUtil.getChatId(update);
 
-        if (update.getMessage().hasPhoto() || update.getMessage().hasDocument()) {
-            String fileType = "";
-            String fileId = "";
-            if (update.getMessage().hasPhoto()) {
-                fileId = update.getMessage().getPhoto().get(0).getFileId();
-            } else if (update.getMessage().hasDocument()) {
-                fileId = update.getMessage().getDocument().getFileId();
-                fileType = update.getMessage().getDocument().getMimeType();
-            }
-            if (fileType == null) {
-                telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
-                        .chatId(chatId)
-                        .text("""
-                                        Отправьте изображение файлом или быстрым способом!""")
-                        .build()));
-            }
-
+        if (update.getMessage().hasDocument()) {
+            String fileId = updateUtil.getFileId(update);
             try {
-                // Добавляем запрос на получение файла в очередь
                 telegramApiQueue.addRequest(new ChatBotRequest(chatId, new GetFile(fileId)));
 
-                // Обработка ответа должна происходить асинхронно в другом месте,
-                // например, в обработчике очереди
                 telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
                         .chatId(chatId)
                         .text("Изображение успешно сохранено.")
@@ -368,7 +514,7 @@ public class AdminUserService {
         } else {
             telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
                     .chatId(chatId)
-                    .text("Пожалуйста, отправьте изображение для обложки мероприятия.")
+                    .text("Пожалуйста, отправьте изображение для обложки мероприятия файлом.")
                     .build()));
         }
     }
