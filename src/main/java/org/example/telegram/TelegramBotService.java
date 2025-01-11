@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.admin.AdminUserService;
 import org.example.base_user.BaseUserService;
 import org.example.dto.ChatBotResponse;
-import org.example.entity.BotState;
+import org.example.entity.UserState;
 import org.example.entity.Role;
 import org.example.entity.Usr;
 import org.example.repository.UserRepository;
@@ -60,12 +60,12 @@ public class TelegramBotService extends TelegramLongPollingBot {
     public void onUpdateReceived(Update update) {
         if (update.hasMessage() || update.hasCallbackQuery()) {
             Long chatId = updateUtil.getChatId(update);
-            BotState currentState = stateManager.getUserState(chatId);
+            UserState currentState = stateManager.getUserState(chatId);
             processMessage(update, currentState);
         }
     }
 
-    private void processMessage(Update update, BotState state) {
+    private void processMessage(Update update, UserState state) {
         if (updateUtil.getUser(update).isEmpty()) {
             processRegistration(update, state);
         } else {
@@ -73,7 +73,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
         }
     }
 
-    private void processRegistration(Update update, BotState state) {
+    private void processRegistration(Update update, UserState state) {
         switch (state) {
             case START:
                 handleStartState(update);
@@ -136,7 +136,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
                             
                             ps: чтобы стать администратором вам нужен специальный ключ!""")
                     .build()));
-            stateManager.setUserState(chatId, BotState.CHOOSING_ROLE);
+            stateManager.setUserState(chatId, UserState.CHOOSING_ROLE);
         }
     }
 
@@ -151,7 +151,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
                         .text("""
                                 Введите специальный ключ:""")
                         .build()));
-                stateManager.setUserState(chatId, BotState.ENTERING_SPECIAL_KEY);
+                stateManager.setUserState(chatId, UserState.ENTERING_SPECIAL_KEY);
                 break;
 
             case "usr":

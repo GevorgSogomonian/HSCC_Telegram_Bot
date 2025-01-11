@@ -2,7 +2,7 @@ package org.example.base_user.commands;
 
 import lombok.RequiredArgsConstructor;
 import org.example.dto.ChatBotResponse;
-import org.example.entity.BotState;
+import org.example.entity.UserState;
 import org.example.entity.Usr;
 import org.example.state_manager.StateManager;
 import org.example.telegram.api.TelegramApiQueue;
@@ -59,6 +59,6 @@ public class BaseStart {
 
         sendMessage.setChatId(chatId);
         telegramApiQueue.addResponse(new ChatBotResponse(chatId, sendMessage));
-        stateManager.setUserState(chatId, BotState.COMMAND_CHOOSING);
+        stateManager.setUserState(chatId, UserState.COMMAND_CHOOSING);
     }
 }

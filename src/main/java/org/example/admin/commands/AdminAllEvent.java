@@ -57,11 +57,12 @@ public class AdminAllEvent {
             sendPhoto.setChatId(chatId.toString());
             sendPhoto.setPhoto(inputFile);
 
-            sendPhoto.setCaption(String.format("""
-                    *%s*:
-                    
-                    %s""",
-                    event.getEventName(), event.getDescription()));
+            sendPhoto.setCaption(event.toString());
+//            sendPhoto.setCaption(String.format("""
+//                    *%s*:
+//
+//                    %s""",
+//                    event.getEventName(), event.getDescription()));
 
             InlineKeyboardButton editButton = new InlineKeyboardButton("редактировать");
             editButton.setCallbackData("edit_event_" + event.getId());

@@ -1,22 +1,21 @@
 package org.example.state_manager;
 
-import org.example.entity.BotState;
+import org.example.entity.UserState;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class StateManager {
-    private final Map<Long, BotState> userStates = new ConcurrentHashMap<>();
+    private final Map<Long, UserState> userStates = new ConcurrentHashMap<>();
     private final Map<Long, Long> eventEditing = new ConcurrentHashMap<>();
 
-    public BotState getUserState(Long userId) {
-        return userStates.getOrDefault(userId, BotState.START);
+    public UserState getUserState(Long userId) {
+        return userStates.getOrDefault(userId, UserState.START);
     }
 
-    public void setUserState(Long userId, BotState state) {
+    public void setUserState(Long userId, UserState state) {
         userStates.put(userId, state);
     }
 

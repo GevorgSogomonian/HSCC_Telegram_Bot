@@ -4,7 +4,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.example.base_user.commands.BaseActualEvents;
 import org.example.base_user.commands.BaseStart;
-import org.example.entity.BotState;
+import org.example.entity.UserState;
 import org.example.state_manager.StateManager;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -26,12 +26,12 @@ public class BaseUserService {
     public void onUpdateRecieved(Update update) {
         if (update.hasMessage() && update.getMessage().hasText()) {
             Long chatId = update.getMessage().getChatId();
-            BotState currentState = stateManager.getUserState(chatId);
+            UserState currentState = stateManager.getUserState(chatId);
             processMessage(update, currentState);
         }
     }
 
-    public void processMessage(Update update, BotState state) {
+    public void processMessage(Update update, UserState state) {
         switch (state) {
             case START -> baseStart.handleStartState(update);
             case COMMAND_CHOOSING -> processTextMessage(update);

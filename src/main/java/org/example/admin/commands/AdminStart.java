@@ -1,7 +1,7 @@
 package org.example.admin.commands;
 
 import lombok.RequiredArgsConstructor;
-import org.example.entity.BotState;
+import org.example.entity.UserState;
 import org.example.entity.Usr;
 import org.example.state_manager.StateManager;
 import org.example.telegram.api.TelegramSender;
@@ -57,6 +57,6 @@ public class AdminStart {
         sendMessage.setReplyMarkup(keyboardMarkup);
         telegramSender.sendText(chatId, sendMessage);
 
-        stateManager.setUserState(chatId, BotState.COMMAND_CHOOSING);
+        stateManager.setUserState(chatId, UserState.COMMAND_CHOOSING);
     }
 }

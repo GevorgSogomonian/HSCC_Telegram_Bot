@@ -53,8 +53,8 @@ public class Event {
                         
                         %s
                         
-                        Start: %s
-                        Duration: %s minutes""",
+                        Начало: %s
+                        Продолжительность: %s минут""",
                 eventName, description, startTime, duration.toMinutes()
         );
     }

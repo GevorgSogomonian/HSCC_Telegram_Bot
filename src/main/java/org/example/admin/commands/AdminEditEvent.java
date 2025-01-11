@@ -2,7 +2,7 @@ package org.example.admin.commands;
 
 import lombok.RequiredArgsConstructor;
 import org.example.dto.ChatBotRequest;
-import org.example.entity.BotState;
+import org.example.entity.UserState;
 import org.example.entity.Event;
 import org.example.repository.EventRepository;
 import org.example.util.image.ImageService;
@@ -51,7 +51,7 @@ public class AdminEditEvent {
                     .text("""
                             Введите новое название для мероприятия:""")
                     .build());
-            stateManager.setUserState(chatId, BotState.EDITING_EVENT_NAME);
+            stateManager.setUserState(chatId, UserState.EDITING_EVENT_NAME);
             stateManager.setEventBeingEdited(chatId, eventId);
         } else {
             SendMessage errorMessage = new SendMessage();
@@ -125,7 +125,7 @@ public class AdminEditEvent {
                                 Введите новое описание мероприятия:""")
                     .build());
 
-            stateManager.setUserState(chatId, BotState.EDITING_EVENT_DESCRIPTION);
+            stateManager.setUserState(chatId, UserState.EDITING_EVENT_DESCRIPTION);
         }
     }
 
@@ -186,7 +186,7 @@ public class AdminEditEvent {
                                 Пришлите новую обложку мероприятия:""")
                     .build());
 
-            stateManager.setUserState(chatId, BotState.EDITING_EVENT_PICTURE);
+            stateManager.setUserState(chatId, UserState.EDITING_EVENT_PICTURE);
         }
     }
 
@@ -211,7 +211,7 @@ public class AdminEditEvent {
                         .build());
 
                 stateManager.doneEventEditing(chatId);
-                stateManager.setUserState(chatId, BotState.COMMAND_CHOOSING);
+                stateManager.setUserState(chatId, UserState.COMMAND_CHOOSING);
                 adminStart.handleStartState(update);
             } catch (Exception e) {
                 telegramSender.sendText(chatId, SendMessage.builder()

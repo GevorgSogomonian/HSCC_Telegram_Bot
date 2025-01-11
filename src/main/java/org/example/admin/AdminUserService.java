@@ -8,8 +8,9 @@ import org.example.admin.commands.AdminDeleteEvent;
 import org.example.admin.commands.AdminEditEvent;
 import org.example.admin.commands.AdminNewEvent;
 import org.example.admin.commands.AdminStart;
+import org.example.dto.ChatBotRequest;
 import org.example.dto.ChatBotResponse;
-import org.example.entity.BotState;
+import org.example.entity.UserState;
 import org.example.state_manager.StateManager;
 import org.example.telegram.api.TelegramApiQueue;
 import org.example.telegram.api.TelegramSender;
@@ -46,21 +47,30 @@ public class AdminUserService {
             processCallbackQuery(update);
         } else if (update.hasMessage()) {
             Long chatId = update.getMessage().getChatId();
-            BotState currentState = stateManager.getUserState(chatId);
+            UserState currentState = stateManager.getUserState(chatId);
             processMessage(update, currentState);
         }
     }
 
-    public void processMessage(Update update, BotState state) {
+    public void processMessage(Update update, UserState state) {
         switch (state) {
+            //Start
             case START -> adminStart.handleStartState(update);
+
+            //New event
             case ENTERING_EVENT_NAME -> adminNewEvent.eventNameCheck(update);
             case ENTERING_EVENT_DESCRIPTION -> adminNewEvent.eventDescriptionCheck(update);
             case ENTERING_EVENT_PICTURE -> adminNewEvent.eventPictureCheck(update);
-            case COMMAND_CHOOSING -> processTextMessage(update);
+            case ENTERING_EVENT_START_TIME -> adminNewEvent.handleEventStartTime(update);
+            case CHOOSING_EVENT_DURATION -> adminNewEvent.handleEventDuration(update);
+
+            //Edit event
             case EDITING_EVENT_NAME -> adminEditEvent.checkEditedEventName(update);
             case EDITING_EVENT_DESCRIPTION -> adminEditEvent.checkEditedEventDescription(update);
             case EDITING_EVENT_PICTURE -> adminEditEvent.checkEditedEventPicture(update);
+
+            //Command choosing
+            case COMMAND_CHOOSING -> processTextMessage(update);
         }
     }
 
@@ -87,6 +97,8 @@ public class AdminUserService {
         } else if (callbackData.startsWith("edit_event_")) {
             Long eventId = Long.parseLong(callbackData.split("_")[2]);
             adminEditEvent.handleEditEvent(chatId, eventId);
+        } else if (callbackData.startsWith("duration_")) {
+            adminNewEvent.handleEventDuration(update);
         } else {
             sendUnknownCallbackResponse(chatId);
         }
@@ -95,7 +107,7 @@ public class AdminUserService {
         answer.setCallbackQueryId(callbackQuery.getId());
         answer.setText("Команда обработана.");
 
-        telegramApiQueue.addResponse(new ChatBotResponse(chatId, answer));
+        telegramApiQueue.addRequest(new ChatBotRequest(callbackQuery.getFrom().getId(), answer));
     }
 
     private void sendUnknownCallbackResponse(Long chatId) {

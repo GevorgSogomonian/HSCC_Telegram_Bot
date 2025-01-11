@@ -1,6 +1,6 @@
 package org.example.entity;
 
-public enum BotState {
+public enum UserState {
     //start states
     START,
     REGISTRATION,
@@ -16,5 +16,7 @@ public enum BotState {
     ENTERING_EVENT_PICTURE,
     EDITING_EVENT_NAME,
     EDITING_EVENT_DESCRIPTION,
-    EDITING_EVENT_PICTURE
+    EDITING_EVENT_PICTURE,
+    ENTERING_EVENT_START_TIME,
+    CHOOSING_EVENT_DURATION,
 }
