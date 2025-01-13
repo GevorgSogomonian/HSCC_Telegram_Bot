@@ -28,13 +28,12 @@ public class BaseStart {
         Long chatId = updateUtil.getChatId(update);
         Usr usr = updateUtil.getUser(update).get();
 
-        System.out.println("Пользователь-админ уже зарегистрирован: " + usr.getUsername());
+        System.out.println("Пользователь уже зарегистрирован: " + usr.getUsername());
 
         SendMessage sendMessage = SendMessage.builder()
                 .chatId(chatId)
-                .text(String.format("""
-                выберите действие""",
-                        usr.getFirstName()))
+                .text("""
+                выберите действие""")
                 .build();
 
         KeyboardButton keyboardButton1 = new KeyboardButton("Актуальные мероприятия");
@@ -60,5 +59,7 @@ public class BaseStart {
         sendMessage.setChatId(chatId);
         telegramApiQueue.addResponse(new ChatBotResponse(chatId, sendMessage));
         stateManager.setUserState(chatId, UserState.COMMAND_CHOOSING);
+        System.out.printf("""
+                userState: %s%n""", stateManager.getUserState(chatId));
     }
 }

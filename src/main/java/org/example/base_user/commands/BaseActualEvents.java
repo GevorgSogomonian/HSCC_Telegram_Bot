@@ -3,7 +3,9 @@ package org.example.base_user.commands;
 import lombok.RequiredArgsConstructor;
 import org.example.dto.ChatBotResponse;
 import org.example.entity.Event;
+import org.example.entity.UserState;
 import org.example.repository.EventRepository;
+import org.example.state_manager.StateManager;
 import org.example.util.image.ImageService;
 import org.example.telegram.api.TelegramApiQueue;
 import org.example.util.UpdateUtil;
@@ -25,6 +27,7 @@ public class BaseActualEvents {
     private final EventRepository eventRepository;
     private final ImageService imageService;
     private final TelegramApiQueue telegramApiQueue;
+    private final StateManager stateManager;
 
     public void handleActualEventsCommand(Update update) {
         Long chatId = updateUtil.getChatId(update);
@@ -60,5 +63,6 @@ public class BaseActualEvents {
 
             telegramApiQueue.addResponse(new ChatBotResponse(chatId, sendPhoto));
         });
+        stateManager.setUserState(chatId, UserState.COMMAND_CHOOSING);
     }
 }

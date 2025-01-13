@@ -29,9 +29,6 @@ import java.util.function.Consumer;
 @Service
 @RequiredArgsConstructor
 public class AdminUserService {
-
-    private final UpdateUtil updateUtil;
-
     private final Map<String, Consumer<Update>> commandHandlers = new HashMap<>();
     private final StateManager stateManager;
     private final TelegramApiQueue telegramApiQueue;
@@ -41,6 +38,7 @@ public class AdminUserService {
     private final AdminStart adminStart;
     private final AdminNewEvent adminNewEvent;
     private final AdminAllEvent adminAllEvent;
+    private final UpdateUtil updateUtil;
 
     public void onUpdateRecieved(Update update) {
         if (update.hasCallbackQuery()) {
@@ -106,6 +104,7 @@ public class AdminUserService {
         AnswerCallbackQuery answer = new AnswerCallbackQuery();
         answer.setCallbackQueryId(callbackQuery.getId());
         answer.setText("Команда обработана.");
+        answer.setShowAlert(true);
 
         telegramApiQueue.addRequest(new ChatBotRequest(callbackQuery.getFrom().getId(), answer));
     }

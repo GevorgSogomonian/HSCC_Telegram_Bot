@@ -3,7 +3,12 @@ package org.example.entity;
 public enum UserState {
     //start states
     START,
-    REGISTRATION,
+
+    //base user registration
+    ENTERING_FIRSTNAME,
+    ENTERING_LASTNAME,
+
+    //admin registration
     CHOOSING_ROLE,
     ENTERING_SPECIAL_KEY,
 

@@ -13,6 +13,7 @@ import org.example.telegram.TelegramBotService;
 import org.example.util.MockMultipartFile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
+import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.PartialBotApiMethod;
@@ -88,6 +89,8 @@ public class TelegramApiProcessor {
                     } else if (method instanceof SendMessage sendMessage) {
                         sendMessage.setParseMode("Markdown");
                         telegramBotService.execute(sendMessage);
+                    } else if (method instanceof AnswerCallbackQuery answerCallbackQuery) {
+                        telegramBotService.execute(answerCallbackQuery);
                     }
 
                 } catch (Exception e) {

@@ -32,16 +32,17 @@ public class AdminDeleteEvent {
 
             eventRepository.delete(event);
 
-            SendMessage confirmationMessage = new SendMessage();
-            confirmationMessage.setText(String.format("""
-                    Мероприятие *%s* удалено!""", eventName));
-
-            telegramSender.sendText(chatId, confirmationMessage);
+            telegramSender.sendText(chatId, SendMessage.builder()
+                            .chatId(chatId)
+                            .text(String.format("""
+                    Мероприятие *%s* удалено!""", eventName))
+                    .build());
         } else {
-            SendMessage errorMessage = new SendMessage();
-            errorMessage.setText("Мероприятие не найдено!");
-
-            telegramSender.sendText(chatId, errorMessage);
+            telegramSender.sendText(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                            Мероприятие не найдено!""")
+                    .build());
         }
     }
 }
