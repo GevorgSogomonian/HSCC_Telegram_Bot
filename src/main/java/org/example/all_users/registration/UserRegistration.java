@@ -8,6 +8,7 @@ import org.example.entity.UserState;
 import org.example.entity.Usr;
 import org.example.repository.UserRepository;
 import org.example.state_manager.StateManager;
+import org.example.util.TemporaryDataService;
 import org.example.util.UserUtilService;
 import org.example.telegram.api.TelegramApiQueue;
 import org.example.telegram.api.TelegramSender;
@@ -27,9 +28,9 @@ public class UserRegistration {
     private final UserUtilService userUtilService;
     private final TelegramSender telegramSender;
     private final StringValidator stringValidator;
-    private final TemporaryUserService temporaryUserService;
     private final UserRepository userRepository;
     private final BaseUserService baseUserService;
+    private final TemporaryDataService<Usr> temporaryUserService;
 
     public void startRegistration(Update update) {
         Long chatId = updateUtil.getChatId(update);
@@ -47,7 +48,7 @@ public class UserRegistration {
                 .build()));
 
         Usr newUser = userUtilService.getNewUser(update, Role.USER);
-        temporaryUserService.putTemporaryUserData(newUser);
+        temporaryUserService.putTemporaryData(chatId, newUser);
         stateManager.setUserState(chatId, UserState.ENTERING_FIRSTNAME);
     }
 
@@ -58,9 +59,9 @@ public class UserRegistration {
         String formattedFirstName = stringValidator.validateAndFormatFirstName(chatId, firstName);
 
         if (!formattedFirstName.isEmpty()) {
-            Usr user = temporaryUserService.getTemporaryUserData(chatId);
+            Usr user = temporaryUserService.getTemporaryData(chatId);
             user.setFirstName(firstName);
-            temporaryUserService.putTemporaryUserData(user);
+            temporaryUserService.putTemporaryData(chatId, user);
 
             telegramSender.sendText(chatId, SendMessage.builder()
                     .chatId(chatId)
@@ -84,7 +85,7 @@ public class UserRegistration {
         String formattedLastName = stringValidator.validateAndFormatLastName(chatId, lastName);
 
         if (!formattedLastName.isEmpty()) {
-            Usr user = temporaryUserService.getTemporaryUserData(chatId);
+            Usr user = temporaryUserService.getTemporaryData(chatId);
             user.setLastName(lastName);
 
             telegramSender.sendText(chatId, SendMessage.builder()

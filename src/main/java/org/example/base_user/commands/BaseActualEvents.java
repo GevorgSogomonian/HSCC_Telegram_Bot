@@ -1,22 +1,18 @@
 package org.example.base_user.commands;
 
 import lombok.RequiredArgsConstructor;
-import org.example.dto.ChatBotResponse;
 import org.example.entity.Event;
 import org.example.entity.UserState;
 import org.example.repository.EventRepository;
 import org.example.state_manager.StateManager;
-import org.example.util.image.ImageService;
-import org.example.telegram.api.TelegramApiQueue;
+import org.example.telegram.api.TelegramSender;
 import org.example.util.UpdateUtil;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
-import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
-import java.io.InputStream;
 import java.util.List;
 
 @Component
@@ -25,9 +21,8 @@ public class BaseActualEvents {
 
     private final UpdateUtil updateUtil;
     private final EventRepository eventRepository;
-    private final ImageService imageService;
-    private final TelegramApiQueue telegramApiQueue;
     private final StateManager stateManager;
+    private final TelegramSender telegramSender;
 
     public void handleActualEventsCommand(Update update) {
         Long chatId = updateUtil.getChatId(update);
@@ -40,16 +35,16 @@ public class BaseActualEvents {
                     
                     %s""",
                     event.getEventName(), event.getDescription()));
-            InputStream fileStream = null;
-            try {
-                fileStream = imageService.getFile("pictures", event.getImageUrl());
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-
-            InputFile inputFile = new InputFile(fileStream, event.getImageUrl());
+//            InputStream fileStream = null;
+//            try {
+//                fileStream = imageService.getFile("pictures", event.getImageUrl());
+//            } catch (Exception e) {
+//                throw new RuntimeException(e);
+//            }
+//
+//            InputFile inputFile = new InputFile(fileStream, event.getImageUrl());
             sendPhoto.setChatId(chatId.toString());
-            sendPhoto.setPhoto(inputFile);
+//            sendPhoto.setPhoto(inputFile);
 
             InlineKeyboardButton button = new InlineKeyboardButton("Подписаться");
             button.setCallbackData("регистрация события в google calendar");
@@ -61,7 +56,8 @@ public class BaseActualEvents {
 
             sendPhoto.setReplyMarkup(keyboardMarkup);
 
-            telegramApiQueue.addResponse(new ChatBotResponse(chatId, sendPhoto));
+            telegramSender.sendPhoto(chatId, event.getId(), sendPhoto);
+//            telegramApiQueue.addResponse(new ChatBotResponse(chatId, sendPhoto));
         });
         stateManager.setUserState(chatId, UserState.COMMAND_CHOOSING);
     }

@@ -3,7 +3,7 @@ package org.example.admin.commands;
 import lombok.RequiredArgsConstructor;
 import org.example.entity.Event;
 import org.example.repository.EventRepository;
-import org.example.util.image.ImageService;
+import org.example.image.ImageService;
 import org.example.telegram.api.TelegramSender;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;

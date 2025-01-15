@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.entity.Event;
 import org.example.repository.EventRepository;
-import org.example.util.image.ImageService;
+import org.example.image.ImageService;
 import org.example.telegram.api.TelegramSender;
 import org.example.util.UpdateUtil;
 import org.springframework.stereotype.Component;
@@ -46,16 +46,16 @@ public class AdminAllEvent {
         allEvents.forEach(event -> {
             SendPhoto sendPhoto = new SendPhoto();
 
-            InputStream fileStream = null;
-            try {
-                fileStream = imageService.getFile("pictures", event.getImageUrl());
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-
-            InputFile inputFile = new InputFile(fileStream, event.getImageUrl());
+//            InputStream fileStream = null;
+//            try {
+//                fileStream = imageService.getFile("pictures", event.getImageUrl());
+//            } catch (Exception e) {
+//                throw new RuntimeException(e);
+//            }
+//
+//            InputFile inputFile = new InputFile(fileStream, event.getImageUrl());
             sendPhoto.setChatId(chatId.toString());
-            sendPhoto.setPhoto(inputFile);
+//            sendPhoto.setPhoto(inputFile);
 
             sendPhoto.setCaption(event.toString());
 //            sendPhoto.setCaption(String.format("""
@@ -79,7 +79,7 @@ public class AdminAllEvent {
 
             sendPhoto.setReplyMarkup(inlineKeyboardMarkup);
 
-            telegramSender.sendPhoto(chatId, sendPhoto);
+            telegramSender.sendPhoto(chatId, event.getId(), sendPhoto);
             log.info("try to send image from minio. Image Name");
         });
     }

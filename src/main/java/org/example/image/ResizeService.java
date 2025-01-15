@@ -1,4 +1,4 @@
-package org.example.util.image;
+package org.example.image;
 
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;

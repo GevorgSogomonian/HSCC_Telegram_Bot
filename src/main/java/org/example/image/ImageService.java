@@ -1,4 +1,4 @@
-package org.example.util.image;
+package org.example.image;
 
 import io.minio.GetObjectArgs;
 import io.minio.MinioClient;

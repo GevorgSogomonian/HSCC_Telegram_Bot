@@ -24,6 +24,7 @@ public class Event {
     private Long creatorChatId;
     private String eventName;
     private String description;
+    private String telegramFileId;
 
     @CreationTimestamp
     @Temporal(TemporalType.TIMESTAMP)
