@@ -74,13 +74,11 @@ public class AdminEditEvent {
                 .build());
 
         stateManager.setUserState(chatId, UserState.EDITING_EVENT_NAME);
-//        stateManager.setEventBeingEdited(chatId, event.getId());
     }
 
     public void checkEditedEventName(Update update) {
         Long chatId = updateUtil.getChatId(update);
         String eventName = update.getMessage().getText();
-//        Long eventId = stateManager.getEventBeingEdited(chatId);
         Event editedEvent = temporaryEditedEventService.getTemporaryData(chatId);
         Long eventId = editedEvent.getId();
         Optional<Event> eventOptional = eventRepository.findByEventName(editedEvent.getEventName());
@@ -159,18 +157,8 @@ public class AdminEditEvent {
                                 Текущая обложка:""")
                 .build());
 
-//        InputStream fileStream;
-//        try {
-//            fileStream = imageService.getFile("pictures", editedEvent.getImageUrl());
-//        } catch (Exception e) {
-//            throw new RuntimeException(e);
-//        }
-//
-//        InputFile inputFile = new InputFile(fileStream, editedEvent.getImageUrl());
-
         telegramSender.sendPhoto(chatId, editedEvent.getId(), SendPhoto.builder()
                 .chatId(chatId)
-//                .photo(inputFile)
                 .build());
 
         telegramSender.sendText(chatId, SendMessage.builder()

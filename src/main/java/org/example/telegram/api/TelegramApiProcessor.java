@@ -14,6 +14,7 @@ import org.example.util.TemporaryDataService;
 import org.example.image.ImageService;
 import org.example.telegram.TelegramBotService;
 import org.example.util.MockMultipartFile;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
@@ -43,39 +44,20 @@ public class TelegramApiProcessor {
     private final EventRepository eventRepository;
     private final MinioClient minioClient;
 
+    @Value("${spring.minio.bucketName}")
+    private String bucketName;
+
     @PostConstruct
     public void startProcessing() {
         new Thread(() -> {
             while (true) {
                 try {
-                    // Извлекаем запрос из очереди
                     ChatBotRequest chatBotRequest = telegramApiQueue.takeRequest();
                     Long chatId = chatBotRequest.getChatId();
                     BotApiMethod<?> method = chatBotRequest.getMethod();
 
                     if (method instanceof GetFile getFile) {
-                        // Выполняем запрос
-                        org.telegram.telegrambots.meta.api.objects.File telegramFile = telegramBotService.execute(getFile);
-                        log.info("executing 'getFile'");
-                        String filePath = telegramFile.getFilePath();
-                        String mimeType = getMimeTypeByExtension(filePath);
-                        String fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
-
-                        InputStream fileStream = telegramBotService.downloadFileAsStream(telegramFile.getFilePath());
-                        MultipartFile multipartFile = new MockMultipartFile(
-                                fileName,
-                                filePath,
-                                mimeType,
-                                fileStream.readAllBytes()
-                        );
-
-                        // Загружаем изображение и обновляем мероприятие
-                        String imageUrl = imageService.uploadImage(multipartFile);
-
-                        Event event = temporaryEventService.getTemporaryData(chatId);
-                        event.setImageUrl(imageUrl);
-//                        event.setTelegramFileId(telegramFile.getFileId());
-                        temporaryEventService.putTemporaryData(chatId, event);
+                        getFileAndSave(chatId, getFile);
                     }
 
                 } catch (Exception e) {
@@ -87,40 +69,14 @@ public class TelegramApiProcessor {
         new Thread(() -> {
             while (true) {
                 try {
-                    // Извлекаем запрос из очереди
                     ChatBotResponse chatBotResponse = telegramApiQueue.takeResponse();
-//                    Long chatId = chatBotResponse.getChatId();
                     PartialBotApiMethod<?> method = chatBotResponse.getMethod();
-//                    Message message;
 
                     if (method instanceof SendPhoto sendPhoto) {
                         sendPhoto.setParseMode("Markdown");
-                        Long eventId = chatBotResponse.getEventId();
-                        Optional<Event> eventOptional = eventRepository.findById(eventId);
-                        if (eventOptional.isPresent()) {
-                            Event event = eventOptional.get();
-                            String telegramFileId = event.getTelegramFileId();
-                            checkFileIdValidity(telegramFileId, sendPhoto, event);
-
-//                            if (message != null && message.getPhoto() != null && !message.getPhoto().isEmpty()) {
-//                                String newTelegramFileId = message.getPhoto().get(0).getFileId();
-//                                event.setTelegramFileId(newTelegramFileId);
-//                                eventRepository.save(event);
-//                            }
+                        if (chatBotResponse.getEventId() != null) {
+                            sendEvent(chatBotResponse, sendPhoto);
                         }
-//                        message = telegramBotService.execute(sendPhoto);
-//                        if (message.getPhoto() != null && !message.getPhoto().isEmpty()) {
-//                            String newFileId = message.getPhoto().get(0).getFileId();
-//                            Optional<Event> eventOptional = eventRepository.findByCreatorChatId(chatId);
-//                            if (eventOptional.isPresent()) {
-//                                Event event = eventOptional.get();
-//                                String oldFileId = event.getTelegramFileId();
-//                                if (!newFileId.equals(oldFileId)) {
-//                                    event.setTelegramFileId(newFileId);
-//                                    eventRepository.save(event);
-//                                }
-//                            }
-//                        }
                     } else if (method instanceof SendMessage sendMessage) {
                         sendMessage.setParseMode("Markdown");
                         telegramBotService.execute(sendMessage);
@@ -148,77 +104,77 @@ public class TelegramApiProcessor {
         return mimeTypes.getOrDefault(extension, "application/octet-stream");
     }
 
+    private void getFileAndSave(Long chatId, GetFile getFile) throws Exception {
+        org.telegram.telegrambots.meta.api.objects.File telegramFile = telegramBotService.execute(getFile);
+        log.info("executing 'getFile'");
+        String filePath = telegramFile.getFilePath();
+        String mimeType = getMimeTypeByExtension(filePath);
+        String fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
+
+        InputStream fileStream = telegramBotService.downloadFileAsStream(telegramFile.getFilePath());
+        MultipartFile multipartFile = new MockMultipartFile(
+                fileName,
+                filePath,
+                mimeType,
+                fileStream.readAllBytes()
+        );
+
+        String imageUrl = imageService.uploadImage(multipartFile);
+
+        Event event = temporaryEventService.getTemporaryData(chatId);
+        event.setImageUrl(imageUrl);
+        temporaryEventService.putTemporaryData(chatId, event);
+    }
+
+    private void sendEvent(ChatBotResponse chatBotResponse, SendPhoto sendPhoto) {
+        Long eventId = chatBotResponse.getEventId();
+        Optional<Event> eventOptional = eventRepository.findById(eventId);
+        if (eventOptional.isPresent()) {
+            Event event = eventOptional.get();
+            String telegramFileId = event.getTelegramFileId();
+            checkFileIdValidity(telegramFileId, sendPhoto, event);
+        }
+    }
+
     private void checkFileIdValidity(String telegramFileId, SendPhoto sendPhoto, Event event) {
-//        InputFile oldInputFile = sendPhoto.getPhoto();
 
         if (telegramFileId != null) {
             try {
                 sendFileFromTelegramCache(telegramFileId, sendPhoto);
             } catch (TelegramApiException e) {
                 sendFileFromMinio(sendPhoto, event);
-//                System.out.println("FileId недействителен: " + e.getMessage());
-//                System.out.println("Sending photo from minio");
-//                sendPhoto.setPhoto(oldInputFile);
-//                try {
-//                    telegramBotService.execute(sendPhoto);
-//                } catch (TelegramApiException ex) {
-//                    throw new RuntimeException(ex);
-//                }
-//                return null; // Ошибка говорит о том, что fileId недоступен
             }
         } else {
-//            sendPhoto.setPhoto(oldInputFile);
             sendFileFromMinio(sendPhoto, event);
-//            Message message;
-//            try {
-//                System.out.println("Sending photo from minio");
-//                message = telegramBotService.execute(sendPhoto);
-//            } catch (TelegramApiException ex) {
-//                throw new RuntimeException(ex);
-//            }
-//            if (message.getPhoto() != null && !message.getPhoto().isEmpty()) {
-//                event.setTelegramFileId(message.getPhoto().get(0).getFileId());
-//                eventRepository.save(event);
-//            }
-//            return null; // Ошибка говорит о том, что fileId недоступен
         }
     }
 
-    private Message sendFileFromTelegramCache(String telegramFileId, SendPhoto sendPhoto) throws TelegramApiException {
+    private void sendFileFromTelegramCache(String telegramFileId, SendPhoto sendPhoto) throws TelegramApiException {
         sendPhoto.setPhoto(new InputFile(telegramFileId));
-        // Пробуем отправить фото
-
         System.out.println("Trying to sent photo directly from telegram");
-        return telegramBotService.execute(sendPhoto); // Если отправка успешна, fileId валиден
+        telegramBotService.execute(sendPhoto);
     }
 
     private void sendFileFromMinio(SendPhoto sendPhoto, Event event) {
         InputStream inputStream;
         try {
             inputStream = minioClient.getObject(GetObjectArgs.builder()
-                    .bucket("pictures")
+                    .bucket(bucketName)
                     .object(event.getImageUrl())
                     .build());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
-// Оборачиваем в InputStreamResource
         InputStreamResource resource = new InputStreamResource(inputStream);
 
         sendPhoto.setPhoto(new InputFile(resource.getInputStream(), event.getImageUrl()));
         Message message;
-        try (resource) { // Автоматически закроет InputStream
+        try (resource) {
             message = telegramBotService.execute(sendPhoto);
         } catch (TelegramApiException | IOException ex) {
             throw new RuntimeException(ex);
         }
-//        try {
-//            System.out.println("Sending photo from minio");
-//            message = telegramBotService.execute(sendPhoto);
-//        } catch (TelegramApiException ex) {
-//            throw new RuntimeException(ex);
-//        }
         if (message.getPhoto() != null && !message.getPhoto().isEmpty()) {
             event.setTelegramFileId(message.getPhoto().get(0).getFileId());
             eventRepository.save(event);

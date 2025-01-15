@@ -7,16 +7,25 @@ import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.RemoveObjectArgs;
 import io.minio.errors.MinioException;
 import io.minio.http.Method;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.entity.Event;
+import org.example.entity.InputStreamResource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
+import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.UUID;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class ImageService {
 
     private final MinioClient minioClient;
@@ -24,11 +33,6 @@ public class ImageService {
 
     @Value("${spring.minio.bucketName}")
     private String bucketName;
-
-    public ImageService(MinioClient minioClient, ResizeService resizeService) {
-        this.minioClient = minioClient;
-        this.resizeService = resizeService;
-    }
 
     public String uploadImage(MultipartFile file) throws Exception {
         String fileName = UUID.randomUUID() + "-" + file.getOriginalFilename();
@@ -52,22 +56,22 @@ public class ImageService {
         return fileName;
     }
 
-    public String getImageUrl(String fileName) throws Exception {
-        return minioClient.getPresignedObjectUrl(
-                GetPresignedObjectUrlArgs.builder()
-                        .bucket(bucketName)
-                        .object(fileName)
-                        .method(Method.GET)
-                        .build()
-        );
-    }
+//    public String getImageUrl(String fileName) throws Exception {
+//        return minioClient.getPresignedObjectUrl(
+//                GetPresignedObjectUrlArgs.builder()
+//                        .bucket(bucketName)
+//                        .object(fileName)
+//                        .method(Method.GET)
+//                        .build()
+//        );
+//    }
 
-    public InputStream getFile(String bucketName, String objectUrl) throws Exception {
-        return minioClient.getObject(GetObjectArgs.builder()
-                .bucket(bucketName)
-                .object(objectUrl)
-                .build());
-    }
+//    public InputStream getFile(String bucketName, String objectUrl) throws Exception {
+//        return minioClient.getObject(GetObjectArgs.builder()
+//                .bucket(bucketName)
+//                .object(objectUrl)
+//                .build());
+//    }
 
     public void deleteImage(String bucketName, String objecUrl) {
         try {
