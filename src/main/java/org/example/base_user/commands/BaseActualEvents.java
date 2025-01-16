@@ -3,17 +3,20 @@ package org.example.base_user.commands;
 import lombok.RequiredArgsConstructor;
 import org.example.entity.Event;
 import org.example.entity.UserState;
+import org.example.entity.Usr;
 import org.example.repository.EventRepository;
 import org.example.state_manager.StateManager;
 import org.example.telegram.api.TelegramSender;
 import org.example.util.UpdateUtil;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
 import java.util.List;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -21,44 +24,46 @@ public class BaseActualEvents {
 
     private final UpdateUtil updateUtil;
     private final EventRepository eventRepository;
-    private final StateManager stateManager;
     private final TelegramSender telegramSender;
 
     public void handleActualEventsCommand(Update update) {
         Long chatId = updateUtil.getChatId(update);
         List<Event> allEvents = eventRepository.findAll();
+        Optional<Usr> userOptional = updateUtil.getUser(update);
 
-        allEvents.forEach(event -> {
-            SendPhoto sendPhoto = new SendPhoto();
-            sendPhoto.setCaption(String.format("""
+        if (userOptional.isPresent() && !allEvents.isEmpty()) {
+            Usr user = userOptional.get();
+
+            allEvents.forEach(event -> {
+                if (!user.getSubscribedEventIds().contains(event.getId().toString())) {
+                    SendPhoto sendPhoto = new SendPhoto();
+                    sendPhoto.setCaption(String.format("""
                     *%s*:
                     
                     %s""",
-                    event.getEventName(), event.getDescription()));
-//            InputStream fileStream = null;
-//            try {
-//                fileStream = imageService.getFile("pictures", event.getImageUrl());
-//            } catch (Exception e) {
-//                throw new RuntimeException(e);
-//            }
-//
-//            InputFile inputFile = new InputFile(fileStream, event.getImageUrl());
-            sendPhoto.setChatId(chatId.toString());
-//            sendPhoto.setPhoto(inputFile);
+                            event.getEventName(), event.getDescription()));
+                    sendPhoto.setChatId(chatId.toString());
 
-            InlineKeyboardButton button = new InlineKeyboardButton("Подписаться");
-            button.setCallbackData("регистрация события в google calendar");
+                    InlineKeyboardButton button = new InlineKeyboardButton("Подписаться");
+                    button.setCallbackData("subscribe_offer-subscribe-to-event_" + event.getId());
 
-            InlineKeyboardMarkup keyboardMarkup = InlineKeyboardMarkup.builder()
-                    .clearKeyboard()
-                    .keyboardRow(List.of(button))
-                    .build();
+                    InlineKeyboardMarkup keyboardMarkup = InlineKeyboardMarkup.builder()
+                            .clearKeyboard()
+                            .keyboardRow(List.of(button))
+                            .build();
 
-            sendPhoto.setReplyMarkup(keyboardMarkup);
+                    sendPhoto.setReplyMarkup(keyboardMarkup);
 
-            telegramSender.sendPhoto(chatId, event.getId(), sendPhoto);
-//            telegramApiQueue.addResponse(new ChatBotResponse(chatId, sendPhoto));
-        });
-        stateManager.setUserState(chatId, UserState.COMMAND_CHOOSING);
+                    telegramSender.sendPhoto(chatId, event.getId(), sendPhoto);
+                }
+            });
+        } else {
+            telegramSender.sendText(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                            Сейчас нет актуальных мероприятий.""")
+                    .build());
+        }
+
     }
 }

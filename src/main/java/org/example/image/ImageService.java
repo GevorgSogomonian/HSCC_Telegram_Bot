@@ -36,19 +36,19 @@ public class ImageService {
 
     public String uploadImage(MultipartFile file) throws Exception {
         String fileName = UUID.randomUUID() + "-" + file.getOriginalFilename();
-        MultipartFile resizedImage = resizeService.resizeImage(file);
-        try (InputStream inputStream = resizedImage.getInputStream()) {
+//        MultipartFile resizedImage = resizeService.resizeImage(file);
+        try (InputStream inputStream = file.getInputStream()) {
             log.info(String.format("""
                     Размер файла в байтах: %s
                     Тип файла: %s
                     Имя файла: %s""",
-                    resizedImage.getSize(), resizedImage.getContentType(), fileName));
+                    file.getSize(), file.getContentType(), fileName));
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(bucketName)
                             .object(fileName)
-                            .stream(inputStream, resizedImage.getSize(), -1)
-                            .contentType(resizedImage.getContentType())
+                            .stream(inputStream, file.getSize(), -1)
+                            .contentType(file.getContentType())
                             .build()
             );
         }

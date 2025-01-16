@@ -50,10 +50,14 @@ public class AdminAllEvent {
             InlineKeyboardButton deleteButton = new InlineKeyboardButton("удалить");
             deleteButton.setCallbackData("delete_offer-deleting-event_" + event.getId());
 
+            InlineKeyboardButton registrateButton = new InlineKeyboardButton("отметить пришедших");
+            registrateButton.setCallbackData("register-users");
+
             InlineKeyboardMarkup inlineKeyboardMarkup = InlineKeyboardMarkup.builder()
                     .clearKeyboard()
                     .keyboardRow(List.of(editButton))
                     .keyboardRow(List.of(deleteButton))
+                    .keyboardRow(List.of(registrateButton))
                     .build();
 
             sendPhoto.setReplyMarkup(inlineKeyboardMarkup);

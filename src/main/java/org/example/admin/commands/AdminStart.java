@@ -43,8 +43,8 @@ public class AdminStart {
         KeyboardRow row2 = new KeyboardRow();
 
         List<KeyboardRow> keyboardRows = new ArrayList<>();
-        keyboardRows.add(row1);
         keyboardRows.add(row2);
+        keyboardRows.add(row1);
 
         row1.add(keyboardButton1);
         row2.add(keyboardButton2);
@@ -52,7 +52,7 @@ public class AdminStart {
         ReplyKeyboardMarkup keyboardMarkup = ReplyKeyboardMarkup.builder()
                 .keyboard(keyboardRows)
                 .resizeKeyboard(true)
-                .oneTimeKeyboard(true)
+                .oneTimeKeyboard(false)
                 .build();
         sendMessage.setReplyMarkup(keyboardMarkup);
         telegramSender.sendText(chatId, sendMessage);

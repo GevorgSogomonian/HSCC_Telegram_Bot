@@ -52,7 +52,7 @@ public class AdminNewEvent {
         telegramSender.sendText(chatId, SendMessage.builder()
                 .chatId(chatId)
                 .text("""
-                Введите название мероприятия:""")
+                        Введите название мероприятия:""")
                 .build());
 
         stateManager.setUserState(chatId, UserState.ENTERING_EVENT_NAME);
@@ -173,11 +173,13 @@ public class AdminNewEvent {
         String userMessage = update.getMessage().getText();
         LocalDateTime validatedEventStartTime = stringValidator.validateEventStartTime(chatId, userMessage);
 
-        Event event = temporaryEventService.getTemporaryData(chatId);
-        event.setStartTime(validatedEventStartTime);
-        temporaryEventService.putTemporaryData(chatId, event);
+        if (validatedEventStartTime != null) {
+            Event event = temporaryEventService.getTemporaryData(chatId);
+            event.setStartTime(validatedEventStartTime);
+            temporaryEventService.putTemporaryData(chatId, event);
 
-        requestEventDuration(chatId);
+            requestEventDuration(chatId);
+        }
     }
 
     private void requestEventDuration(Long chatId) {

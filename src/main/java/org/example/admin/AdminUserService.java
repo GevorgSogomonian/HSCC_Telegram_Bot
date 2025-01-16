@@ -116,17 +116,4 @@ public class AdminUserService {
 
         telegramSender.sendText(chatId, unknownCallbackMessage);
     }
-
-    private String getMimeTypeByExtension(String filePath) {
-        Map<String, String> mimeTypes = Map.of(
-                "jpg", "image/jpeg",
-                "png", "image/png",
-                "gif", "image/gif",
-                "pdf", "application/pdf",
-                "txt", "text/plain"
-        );
-
-        String extension = filePath.substring(filePath.lastIndexOf('.') + 1);
-        return mimeTypes.get(extension);
-    }
 }

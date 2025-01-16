@@ -449,7 +449,7 @@ public class AdminEditEvent {
         telegramSender.sendText(chatId, SendMessage.builder()
                 .chatId(chatId)
                 .text("""
-                        Сохранить отредактированное мероприятия?""")
+                        Сохранить отредактированное мероприятие?""")
                 .replyMarkup(keyboardMarkup)
                 .build());
 

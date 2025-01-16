@@ -37,21 +37,26 @@ public class BaseStart {
                 .build();
 
         KeyboardButton keyboardButton1 = new KeyboardButton("Актуальные мероприятия");
-        KeyboardButton keyboardButton2 = new KeyboardButton("Мои мероприятия");
         KeyboardRow row1 = new KeyboardRow();
+        row1.add(keyboardButton1);
+
+        KeyboardButton keyboardButton2 = new KeyboardButton("Мои мероприятия");
         KeyboardRow row2 = new KeyboardRow();
+        row2.add(keyboardButton2);
+
+        KeyboardButton keyboardButton3 = new KeyboardButton("Информация о себе");
+        KeyboardRow row3 = new KeyboardRow();
+        row3.add(keyboardButton3);
 
         List<KeyboardRow> keyboardRows = new ArrayList<>();
         keyboardRows.add(row1);
         keyboardRows.add(row2);
-
-        row1.add(keyboardButton1);
-        row2.add(keyboardButton2);
+        keyboardRows.add(row3);
 
         ReplyKeyboardMarkup keyboardMarkup = ReplyKeyboardMarkup.builder()
                 .keyboard(keyboardRows)
                 .resizeKeyboard(true)
-                .oneTimeKeyboard(true)
+                .oneTimeKeyboard(false)
                 .build();
 
         sendMessage.setReplyMarkup(keyboardMarkup);
