@@ -63,9 +63,13 @@ public class AdminUserService {
             case CHOOSING_EVENT_DURATION -> adminNewEvent.handleEventDuration(update);
 
             //Edit event
+            case ACCEPTING_EDITING_EVENT_NAME -> adminEditEvent.acceptingEditingEventName(update);
             case EDITING_EVENT_NAME -> adminEditEvent.checkEditedEventName(update);
+            case ACCEPTING_EDITING_EVENT_DESCRIPTION -> adminEditEvent.acceptingEditingEventDescription(update);
             case EDITING_EVENT_DESCRIPTION -> adminEditEvent.checkEditedEventDescription(update);
+            case ACCEPTING_EDITING_EVENT_PICTURE -> adminEditEvent.acceptingEditingEventPicture(update);
             case EDITING_EVENT_PICTURE -> adminEditEvent.checkEditedEventPicture(update);
+            case ACCEPTING_SAVE_EDITED_EVENT -> adminEditEvent.acceptingSavingEditedEvent(update);
 
             //Command choosing
             case COMMAND_CHOOSING -> processTextMessage(update);
@@ -85,28 +89,24 @@ public class AdminUserService {
 
     private void processCallbackQuery(Update update) {
         CallbackQuery callbackQuery = update.getCallbackQuery();
+        Integer messageId = callbackQuery.getMessage().getMessageId();
         String callbackData = update.getCallbackQuery().getData();
         Long chatId = updateUtil.getChatId(update);
+        String[] callbackTextArray = callbackData.split("_");
 
-        if (callbackData.startsWith("delete_event_")) {
-            System.out.println("сработало удаление");
-            Long eventId = Long.parseLong(callbackData.split("_")[2]);
-            adminDeleteEvent.handleDeleteEvent(chatId, eventId);
-        } else if (callbackData.startsWith("edit_event_")) {
-            Long eventId = Long.parseLong(callbackData.split("_")[2]);
-            adminEditEvent.handleEditEvent(chatId, eventId);
-        } else if (callbackData.startsWith("duration_")) {
-            adminNewEvent.handleEventDuration(update);
-        } else {
-            sendUnknownCallbackResponse(chatId);
+        switch (callbackTextArray[0]) {
+            case "delete" -> adminDeleteEvent.processCallbackQuery(update);
+            case "edit" -> adminEditEvent.processCallbackQuery(update);
+            case "duration" -> adminNewEvent.handleEventDuration(update);
+            default -> sendUnknownCallbackResponse(chatId);
         }
 
-        AnswerCallbackQuery answer = new AnswerCallbackQuery();
-        answer.setCallbackQueryId(callbackQuery.getId());
-        answer.setText("Команда обработана.");
-        answer.setShowAlert(true);
-
-        telegramApiQueue.addRequest(new ChatBotRequest(callbackQuery.getFrom().getId(), answer));
+//        AnswerCallbackQuery answer = new AnswerCallbackQuery();
+//        answer.setCallbackQueryId(callbackQuery.getId());
+//        answer.setText("Команда обработана.");
+//        answer.setShowAlert(true);
+//
+//        telegramApiQueue.addRequest(new ChatBotRequest(callbackQuery.getFrom().getId(), answer));
     }
 
     private void sendUnknownCallbackResponse(Long chatId) {

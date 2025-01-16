@@ -23,6 +23,7 @@ import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.PartialBotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -82,6 +83,8 @@ public class TelegramApiProcessor {
                         telegramBotService.execute(sendMessage);
                     } else if (method instanceof AnswerCallbackQuery answerCallbackQuery) {
                         telegramBotService.execute(answerCallbackQuery);
+                    } else if (method instanceof DeleteMessage deletemessage) {
+                        telegramBotService.execute(deletemessage);
                     }
 
                 } catch (Exception e) {

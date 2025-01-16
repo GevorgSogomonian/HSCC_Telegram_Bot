@@ -12,8 +12,10 @@ import org.example.util.StringValidator;
 import org.example.util.TemporaryDataService;
 import org.example.util.UpdateUtil;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -203,38 +205,59 @@ public class AdminNewEvent {
     }
 
     public void handleEventDuration(Update update) {
-        CallbackQuery callbackQuery = update.getCallbackQuery();
-        String callbackData = callbackQuery.getData();
-        Long chatId = callbackQuery.getMessage().getChatId();
+        if (update.hasCallbackQuery()) {
+            CallbackQuery callbackQuery = update.getCallbackQuery();
+            String callbackData = callbackQuery.getData();
+            Long chatId = callbackQuery.getMessage().getChatId();
 
-        Long durationInMinutes = switch (callbackData) {
-            case "duration_1h" -> 60L;
-            case "duration_1.5h" -> 90L;
-            case "duration_2h" -> 120L;
-            case "duration_3h" -> 180L;
-            default -> null;
-        };
+            Long durationInMinutes = switch (callbackData) {
+                case "duration_1h" -> 60L;
+                case "duration_1.5h" -> 90L;
+                case "duration_2h" -> 120L;
+                case "duration_3h" -> 180L;
+                default -> null;
+            };
 
-        if (durationInMinutes != null) {
-            Event event = temporaryEventService.getTemporaryData(chatId);
-            event.setDuration(Duration.ofMinutes(durationInMinutes));
-            eventRepository.save(event);
+            if (durationInMinutes != null) {
+                Event event = temporaryEventService.getTemporaryData(chatId);
+                event.setDuration(Duration.ofMinutes(durationInMinutes));
+                eventRepository.save(event);
 
-            telegramSender.sendText(chatId, SendMessage.builder()
-                    .chatId(chatId)
-                    .text("""
+                telegramSender.sendText(chatId, SendMessage.builder()
+                        .chatId(chatId)
+                        .text("""
                             Мероприятие успешно создано!""")
-                    .build());
-        } else {
-            telegramSender.sendText(chatId, SendMessage.builder()
-                            .chatId(chatId)
-                            .text("""
-                                    Некорректный выбор. Попробуйте снова.""")
-                    .build());
-        }
+                        .build());
 
-        stateManager.setUserState(chatId, UserState.COMMAND_CHOOSING);
-        adminStart.handleStartState(update);
+                telegramSender.deleteMessage(chatId, DeleteMessage.builder()
+                        .chatId(chatId)
+                        .messageId(callbackQuery.getMessage().getMessageId())
+                        .build());
+
+                telegramSender.answerCallbackQuerry(chatId, AnswerCallbackQuery.builder()
+                        .callbackQueryId(callbackQuery.getId())
+                        .text("""
+                                Команда обработана.""")
+                        .showAlert(false)
+                        .build());
+            } else {
+                telegramSender.sendText(chatId, SendMessage.builder()
+                        .chatId(chatId)
+                        .text("""
+                                    Некорректный выбор. Попробуйте снова.""")
+                        .build());
+            }
+
+//        AnswerCallbackQuery answer = new AnswerCallbackQuery();
+//        answer.setCallbackQueryId(callbackQuery.getId());
+//        answer.setText("Команда обработана.");
+//        answer.setShowAlert(true);
+//
+//        telegramApiQueue.addRequest(new ChatBotRequest(callbackQuery.getFrom().getId(), answer));
+
+            stateManager.setUserState(chatId, UserState.COMMAND_CHOOSING);
+            adminStart.handleStartState(update);
+        }
     }
 
     private InlineKeyboardButton createDurationButton(String text, String callbackData) {

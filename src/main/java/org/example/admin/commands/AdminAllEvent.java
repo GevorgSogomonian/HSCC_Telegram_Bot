@@ -45,11 +45,10 @@ public class AdminAllEvent {
             sendPhoto.setCaption(event.toString());
 
             InlineKeyboardButton editButton = new InlineKeyboardButton("редактировать");
-            editButton.setCallbackData("edit_event_" + event.getId());
+            editButton.setCallbackData("edit_offer-editing-event_" + event.getId());
 
             InlineKeyboardButton deleteButton = new InlineKeyboardButton("удалить");
-            deleteButton.setCallbackData("delete_event_" + event.getId());
-
+            deleteButton.setCallbackData("delete_offer-deleting-event_" + event.getId());
 
             InlineKeyboardMarkup inlineKeyboardMarkup = InlineKeyboardMarkup.builder()
                     .clearKeyboard()

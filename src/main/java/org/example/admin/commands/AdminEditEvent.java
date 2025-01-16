@@ -13,13 +13,22 @@ import org.example.telegram.api.TelegramApiQueue;
 import org.example.telegram.api.TelegramSender;
 import org.example.util.UpdateUtil;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
+import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 
 import java.io.InputStream;
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -37,19 +46,167 @@ public class AdminEditEvent {
     private final TemporaryDataService<Event> temporaryEditedEventService;
     private final StringValidator stringValidator;
 
-    public void handleEditEvent(Long chatId, Long eventId) {
+    public void processCallbackQuery(Update update) {
+        CallbackQuery callbackQuery = update.getCallbackQuery();
+        Integer messageId = callbackQuery.getMessage().getMessageId();
+        String callbackData = update.getCallbackQuery().getData();
+        Long chatId = updateUtil.getChatId(update);
+        String[] callbackTextArray = callbackData.split("_");
+
+        switch (callbackTextArray[1]) {
+            case "offer-editing-event" -> handleEditEvent(chatId, callbackData, messageId);
+            case "accept-editing-event" -> acceptEventEditing(chatId, callbackData, messageId);
+            case "cancel-editing-event" -> cancelEditingEvent(chatId, messageId);
+            default -> sendUnknownCallbackResponse(chatId);
+        }
+
+        telegramSender.answerCallbackQuerry(chatId, AnswerCallbackQuery.builder()
+                .callbackQueryId(callbackQuery.getId())
+                .text("""
+                        Команда обработана.""")
+                .showAlert(false)
+                .build());
+    }
+
+    private void sendUnknownCallbackResponse(Long chatId) {
+        SendMessage unknownCallbackMessage = new SendMessage();
+        unknownCallbackMessage.setChatId(chatId.toString());
+        unknownCallbackMessage.setText("Неизвестная команда.");
+
+        telegramSender.sendText(chatId, unknownCallbackMessage);
+    }
+
+    public void handleEditEvent(Long chatId, String callbackText, Integer oldMessageId) {
+        Long eventId = Long.parseLong(callbackText.split("_")[2]);
         Optional<Event> eventOptional = eventRepository.findById(eventId);
 
         if (eventOptional.isPresent()) {
             Event editedEvent = eventOptional.get();
-            temporaryEditedEventService.putTemporaryData(chatId, editedEvent);
+            String eventName = eventOptional.get().getEventName();
+            InlineKeyboardButton yesButton = InlineKeyboardButton.builder()
+                    .text("Да")
+                    .callbackData(String.format("edit_accept-editing-event_%s_old-message-id_%s", eventId, oldMessageId))
+                    .build();
 
-            requestNewEventName(chatId, editedEvent);
+            InlineKeyboardButton noButton = InlineKeyboardButton.builder()
+                    .text("Нет")
+                    .callbackData("edit_cancel-editing-event")
+                    .build();
+
+            InlineKeyboardMarkup inlineKeyboardMarkup = InlineKeyboardMarkup.builder()
+                    .clearKeyboard()
+                    .keyboardRow(List.of(yesButton, noButton))
+                    .build();
+
+            telegramSender.sendText(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text(String.format("""
+                                Начать редактирование мероприятия: *%s* ?""", eventName))
+                    .replyMarkup(inlineKeyboardMarkup)
+                    .build());
+//            temporaryEditedEventService.putTemporaryData(chatId, editedEvent);
+//            telegramSender.sendText(chatId, SendMessage.builder()
+//                            .chatId(chatId)
+//                            .text(String.format("""
+//                                    Редактируем мероприятие: *%s*""", editedEvent.getEventName()))
+//                    .build());
+//
+//            offerEnterNewName(chatId);
         } else {
             telegramSender.sendText(chatId, SendMessage.builder()
                             .chatId(chatId)
                             .text("""
                                     Мероприятие не найдено!""")
+                    .build());
+
+            telegramSender.deleteMessage(chatId, DeleteMessage.builder()
+                            .chatId(chatId)
+                            .messageId(oldMessageId)
+                    .build());
+        }
+    }
+
+    private void acceptEventEditing(Long chatId, String callbackText, Integer messageId) {
+        Long eventId = Long.parseLong(callbackText.split("_")[2]);
+        Optional<Event> eventOptional = eventRepository.findById(eventId);
+
+        if (eventOptional.isPresent()) {
+            Event editedEvent = eventOptional.get();
+            temporaryEditedEventService.putTemporaryData(chatId, editedEvent);
+            telegramSender.sendText(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text(String.format("""
+                                    Редактируем мероприятие: *%s*""", editedEvent.getEventName()))
+                    .build());
+
+            telegramSender.deleteMessage(chatId, DeleteMessage.builder()
+                    .chatId(chatId)
+                    .messageId(messageId)
+                    .build());
+
+            offerEnterNewName(chatId);
+        } else {
+            telegramSender.sendText(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                                    Мероприятие не найдено!""")
+                    .build());
+
+            telegramSender.deleteMessage(chatId, DeleteMessage.builder()
+                    .chatId(chatId)
+                    .messageId(messageId)
+                    .build());
+        }
+    }
+
+    private void cancelEditingEvent(Long chatId, Integer messageId) {
+        telegramSender.sendText(chatId, SendMessage.builder()
+                        .chatId(chatId)
+                        .text("""
+                                Редактирование отменено.""")
+                .build());
+
+        telegramSender.deleteMessage(chatId, DeleteMessage.builder()
+                        .chatId(chatId)
+                        .messageId(messageId)
+                .build());
+    }
+
+    private void offerEnterNewName(Long chatId) {
+        KeyboardButton yesButton = new KeyboardButton("Да");
+        KeyboardButton noButton = new KeyboardButton("Нет");
+
+        ReplyKeyboardMarkup keyboardMarkup = ReplyKeyboardMarkup.builder()
+                .clearKeyboard()
+                .keyboard(List.of(new KeyboardRow(List.of(yesButton, noButton))))
+                .resizeKeyboard(true)
+                .oneTimeKeyboard(true)
+                .build();
+
+        telegramSender.sendText(chatId, SendMessage.builder()
+                        .chatId(chatId)
+                        .text("""
+                                Хотите изменить название мероприятия?""")
+                        .replyMarkup(keyboardMarkup)
+                .build());
+
+        stateManager.setUserState(chatId, UserState.ACCEPTING_EDITING_EVENT_NAME);
+    }
+
+    public void acceptingEditingEventName(Update update) {
+        Long chatId = updateUtil.getChatId(update);
+        String userMessage = update.getMessage().getText().toLowerCase();
+        Event editedEvent = temporaryEditedEventService.getTemporaryData(chatId);
+
+        if (userMessage.equals("да")) {
+            requestNewEventName(chatId, editedEvent);
+        } else if (userMessage.equals("нет")) {
+            offerEnterNewDescription(chatId);
+        } else {
+            telegramSender.sendText(chatId, SendMessage.builder()
+                            .chatId(chatId)
+                            .text("""
+                                    Введите 'да' или 'нет'""")
                     .build());
         }
     }
@@ -103,8 +260,47 @@ public class AdminEditEvent {
                                 Отлично! Название сохранено!""")
                         .build());
 
-                requestNewEventDescription(chatId, editedEvent);
+                offerEnterNewDescription(chatId);
             }
+        }
+    }
+
+    private void offerEnterNewDescription(Long chatId) {
+        KeyboardButton yesButton = new KeyboardButton("Да");
+        KeyboardButton noButton = new KeyboardButton("Нет");
+
+        ReplyKeyboardMarkup keyboardMarkup = ReplyKeyboardMarkup.builder()
+                .clearKeyboard()
+                .keyboard(List.of(new KeyboardRow(List.of(yesButton, noButton))))
+                .resizeKeyboard(true)
+                .oneTimeKeyboard(true)
+                .build();
+
+        telegramSender.sendText(chatId, SendMessage.builder()
+                .chatId(chatId)
+                .text("""
+                                Хотите изменить описание мероприятия?""")
+                .replyMarkup(keyboardMarkup)
+                .build());
+
+        stateManager.setUserState(chatId, UserState.ACCEPTING_EDITING_EVENT_DESCRIPTION);
+    }
+
+    public void acceptingEditingEventDescription(Update update) {
+        Long chatId = updateUtil.getChatId(update);
+        String userMessage = update.getMessage().getText().toLowerCase();
+        Event editedEvent = temporaryEditedEventService.getTemporaryData(chatId);
+
+        if (userMessage.equals("да")) {
+            requestNewEventDescription(chatId, editedEvent);
+        } else if (userMessage.equals("нет")) {
+            offerEnterNewPicture(chatId);
+        } else {
+            telegramSender.sendText(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                                    Введите 'да' или 'нет'""")
+                    .build());
         }
     }
 
@@ -146,7 +342,46 @@ public class AdminEditEvent {
                             Отлично! Новое описание мероприятия сохранено!""")
                     .build());
 
+            offerEnterNewPicture(chatId);
+        }
+    }
+
+    private void offerEnterNewPicture(Long chatId) {
+        KeyboardButton yesButton = new KeyboardButton("Да");
+        KeyboardButton noButton = new KeyboardButton("Нет");
+
+        ReplyKeyboardMarkup keyboardMarkup = ReplyKeyboardMarkup.builder()
+                .clearKeyboard()
+                .keyboard(List.of(new KeyboardRow(List.of(yesButton, noButton))))
+                .resizeKeyboard(true)
+                .oneTimeKeyboard(true)
+                .build();
+
+        telegramSender.sendText(chatId, SendMessage.builder()
+                .chatId(chatId)
+                .text("""
+                        Хотите изменить обложку мероприятия?""")
+                .replyMarkup(keyboardMarkup)
+                .build());
+
+        stateManager.setUserState(chatId, UserState.ACCEPTING_EDITING_EVENT_PICTURE);
+    }
+
+    public void acceptingEditingEventPicture(Update update) {
+        Long chatId = updateUtil.getChatId(update);
+        String userMessage = update.getMessage().getText().toLowerCase();
+        Event editedEvent = temporaryEditedEventService.getTemporaryData(chatId);
+
+        if (userMessage.equals("да")) {
             requestNewEventPicture(chatId, editedEvent);
+        } else if (userMessage.equals("нет")) {
+            offerSaveEditedEvent(chatId);
+        } else {
+            telegramSender.sendText(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                            Введите 'да' или 'нет'""")
+                    .build());
         }
     }
 
@@ -154,12 +389,13 @@ public class AdminEditEvent {
         telegramSender.sendText(chatId, SendMessage.builder()
                 .chatId(chatId)
                 .text("""
-                                Текущая обложка:""")
+                        Текущая обложка:""")
                 .build());
 
-        telegramSender.sendPhoto(chatId, editedEvent.getId(), SendPhoto.builder()
-                .chatId(chatId)
-                .build());
+        SendPhoto sendPhoto = new SendPhoto();
+        sendPhoto.setChatId(chatId);
+
+        telegramSender.sendPhoto(chatId, editedEvent.getId(), sendPhoto);
 
         telegramSender.sendText(chatId, SendMessage.builder()
                 .chatId(chatId)
@@ -176,28 +412,7 @@ public class AdminEditEvent {
         if (update.getMessage().hasDocument()) {
             String fileId = updateUtil.getFileId(update);
             try {
-                Event editedEvent = temporaryEditedEventService.getTemporaryData(chatId);
-                String imageUrl = editedEvent.getImageUrl();
-                if (imageUrl != null && !imageUrl.isBlank()) {
-                    String bucketName = "pictures";
-                    imageService.deleteImage(bucketName, imageUrl);
-                    System.out.println("""
-                            Сработал удаление)""");
-                }
-
                 telegramApiQueue.addRequest(new ChatBotRequest(chatId, new GetFile(fileId)));
-
-                Thread pictureSaveThread = new Thread(() -> {
-                    try {
-                        Thread.sleep(5000);
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-                    eventRepository.save(temporaryEditedEventService.getTemporaryData(chatId));
-                    System.out.println("""
-                            Сработал сохранение)""");
-                });
-                pictureSaveThread.start();
 
                 telegramSender.sendText(chatId, SendMessage.builder()
                         .chatId(chatId)
@@ -205,8 +420,7 @@ public class AdminEditEvent {
                                 Новое изображение сохранено.""")
                         .build());
 
-                stateManager.setUserState(chatId, UserState.COMMAND_CHOOSING);
-                adminStart.handleStartState(update);
+                offerSaveEditedEvent(chatId);
             } catch (Exception e) {
                 telegramSender.sendText(chatId, SendMessage.builder()
                         .chatId(chatId)
@@ -219,5 +433,82 @@ public class AdminEditEvent {
                     .text("Пожалуйста, отправьте изображение для обложки мероприятия файлом.")
                     .build());
         }
+    }
+
+    private void offerSaveEditedEvent(Long chatId) {
+        KeyboardButton yesButton = new KeyboardButton("Да");
+        KeyboardButton noButton = new KeyboardButton("Нет");
+
+        ReplyKeyboardMarkup keyboardMarkup = ReplyKeyboardMarkup.builder()
+                .clearKeyboard()
+                .keyboard(List.of(new KeyboardRow(List.of(yesButton, noButton))))
+                .resizeKeyboard(true)
+                .oneTimeKeyboard(true)
+                .build();
+
+        telegramSender.sendText(chatId, SendMessage.builder()
+                .chatId(chatId)
+                .text("""
+                        Сохранить отредактированное мероприятия?""")
+                .replyMarkup(keyboardMarkup)
+                .build());
+
+        stateManager.setUserState(chatId, UserState.ACCEPTING_SAVE_EDITED_EVENT);
+    }
+
+    public void acceptingSavingEditedEvent(Update update) {
+        Long chatId = updateUtil.getChatId(update);
+        String userMessage = update.getMessage().getText().toLowerCase();
+
+        if (userMessage.equals("да")) {
+            saveEditedEvent(update);
+            telegramSender.sendText(chatId, SendMessage.builder()
+                            .chatId(chatId)
+                            .text("""
+                                    Отредактированное мероприятие сохранено.""")
+                    .build());
+            stateManager.setUserState(chatId, UserState.COMMAND_CHOOSING);
+            adminStart.handleStartState(update);
+        } else if (userMessage.equals("нет")) {
+            telegramSender.sendText(chatId, SendMessage.builder()
+                            .chatId(chatId)
+                            .text("""
+                                    Отредактированное мероприятие не сохранено.""")
+                    .build());
+            stateManager.setUserState(chatId, UserState.COMMAND_CHOOSING);
+            adminStart.handleStartState(update);
+        } else {
+            telegramSender.sendText(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                            Введите 'да' или 'нет'""")
+                    .build());
+        }
+    }
+
+    private void saveEditedEvent(Update update) {
+        Long chatId = updateUtil.getChatId(update);
+        Event editedEvent = temporaryEditedEventService.getTemporaryData(chatId);
+        Event oldEvent = eventRepository.findById(editedEvent.getId()).get();
+        String oldImageUrl = oldEvent.getImageUrl();
+
+        if (oldImageUrl != null && !oldImageUrl.isBlank()) {
+            String bucketName = "pictures";
+            imageService.deleteImage(bucketName, oldImageUrl);
+            System.out.println("""
+                    Сработал удаление)""");
+        }
+
+        Thread pictureSaveThread = new Thread(() -> {
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            eventRepository.save(temporaryEditedEventService.getTemporaryData(chatId));
+            System.out.println("""
+                    Сработал сохранение)""");
+        });
+        pictureSaveThread.start();
     }
 }
