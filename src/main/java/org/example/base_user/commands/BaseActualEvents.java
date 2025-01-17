@@ -2,10 +2,8 @@ package org.example.base_user.commands;
 
 import lombok.RequiredArgsConstructor;
 import org.example.entity.Event;
-import org.example.entity.UserState;
 import org.example.entity.Usr;
 import org.example.repository.EventRepository;
-import org.example.state_manager.StateManager;
 import org.example.telegram.api.TelegramSender;
 import org.example.util.UpdateUtil;
 import org.springframework.stereotype.Component;
@@ -38,11 +36,7 @@ public class BaseActualEvents {
             allEvents.forEach(event -> {
                 if (!user.getSubscribedEventIds().contains(event.getId().toString())) {
                     SendPhoto sendPhoto = new SendPhoto();
-                    sendPhoto.setCaption(String.format("""
-                    *%s*:
-                    
-                    %s""",
-                            event.getEventName(), event.getDescription()));
+                    sendPhoto.setCaption(event.toString());
                     sendPhoto.setChatId(chatId.toString());
 
                     InlineKeyboardButton button = new InlineKeyboardButton("Подписаться");
@@ -73,11 +67,7 @@ public class BaseActualEvents {
                 if (!subscribedEvents.isEmpty()) {
                     for (Event event : subscribedEvents) {
                         SendPhoto sendPhoto = new SendPhoto();
-                        sendPhoto.setCaption(String.format("""
-                                        *%s*:
-                                        
-                                        %s""",
-                                event.getEventName(), event.getDescription()));
+                        sendPhoto.setCaption(event.toString());
                         sendPhoto.setChatId(chatId.toString());
 
                         InlineKeyboardButton button = new InlineKeyboardButton("Отписаться");

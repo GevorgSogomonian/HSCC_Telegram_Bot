@@ -1,6 +1,7 @@
 package org.example.util;
 
 import lombok.RequiredArgsConstructor;
+import org.example.entity.Admin;
 import org.example.entity.Role;
 import org.example.entity.Usr;
 import org.example.repository.UserRepository;
@@ -30,12 +31,28 @@ public class UserUtilService {
         newUser.setNumberOfVisitedEvents(0);
         newUser.setNumberOfMissedEvents(0);
         newUser.setSubscribedEventIds("");
+        newUser.setIsAdminClone(false);
 
 
         Long uniqueNumber = userRepository.getUniqueNumber();
         newUser.setUserId(getNewUserId(uniqueNumber));
 
         return newUser;
+    }
+
+    public Admin getNewAdmin(Update update) {
+        Long chatId = updateUtil.getChatId(update);
+        org.telegram.telegrambots.meta.api.objects.User fromUser = update.getMessage().getFrom();
+
+        Admin newAdmin = new Admin();
+        newAdmin.setChatId(chatId);
+        newAdmin.setUsername(fromUser.getUserName());
+        newAdmin.setLanguageCode(fromUser.getLanguageCode());
+        newAdmin.setIsPremium(fromUser.getIsPremium());
+        newAdmin.setIsBot(fromUser.getIsBot());
+        newAdmin.setUserMode(false);
+
+        return newAdmin;
     }
 
     private Long getNewUserId(Long uniqueNumber) {

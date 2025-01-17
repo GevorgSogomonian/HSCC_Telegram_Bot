@@ -49,7 +49,9 @@ public class RegistrationService {
     private void startRegisterNewUser(Update update) {
         Long chatId = updateUtil.getChatId(update);
 
-        if (update.hasMessage() && update.getMessage().getFrom() != null) {
+        if (updateUtil.getAdmin(update).isPresent()) {
+            userRegistration.startRegistration(update);
+        } else if (update.hasMessage() && update.getMessage().getFrom() != null) {
 
             KeyboardRow row = new KeyboardRow();
             row.add(new KeyboardButton("Админ"));

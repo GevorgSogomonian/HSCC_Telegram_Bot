@@ -16,17 +16,18 @@ public class Usr {
     private Long id;
 
     @Column(unique = true, nullable = false)
-    private Long chatId; // Идентификатор чата (уникальный)
+    private Long chatId;
 
     private String username;
     private String firstName;
     private String lastName;
     private Role role;
-    private String languageCode; // Код языка пользователя (например, "ru", "en")
-    private Boolean isPremium; // Информация о премиум-аккаунте
-    private Boolean isBot; // Является ли пользователь ботом
+    private String languageCode;
+    private Boolean isPremium;
+    private Boolean isBot;
     private Long userId;
     private Integer numberOfVisitedEvents;
     private Integer numberOfMissedEvents;
     private String subscribedEventIds;
+    private Boolean isAdminClone;
 }

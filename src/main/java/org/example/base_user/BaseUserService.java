@@ -8,6 +8,7 @@ import org.example.base_user.commands.BaseStart;
 import org.example.base_user.commands.BaseSubscribeToEvent;
 import org.example.base_user.commands.BaseUnsubscribeFromEvent;
 import org.example.base_user.commands.BaseUserInfo;
+import org.example.base_user.commands.ReturnToAdminMode;
 import org.example.entity.UserState;
 import org.example.state_manager.StateManager;
 import org.example.telegram.api.TelegramSender;
@@ -36,6 +37,7 @@ public class BaseUserService {
     private final TelegramSender telegramSender;
     private final BaseUnsubscribeFromEvent baseUnsubscribeFromEvent;
     private final BaseMyEvents baseMyEvents;
+    private final ReturnToAdminMode returnToAdminMode;
 
     public void onUpdateRecieved(Update update) {
         if (update.hasCallbackQuery()) {
@@ -53,6 +55,7 @@ public class BaseUserService {
         switch (state) {
             case START -> baseStart.handleStartState(update);
             case COMMAND_CHOOSING -> processTextMessage(update);
+            default -> baseStart.handleStartState(update);
         }
     }
 
@@ -90,6 +93,7 @@ public class BaseUserService {
         commandHandlers.put("Актуальные мероприятия", baseActualEvents::handleActualEventsCommand);
         commandHandlers.put("Мои мероприятия", baseMyEvents::handleMyEventsCommand);
         commandHandlers.put("Информация о себе", baseUserInfo::handleUserInfoCommand);
+        commandHandlers.put("Вернуться в режим админа", returnToAdminMode::handleReturnToAdminModeCommand);
     }
 
     private void processTextMessage(Update update) {

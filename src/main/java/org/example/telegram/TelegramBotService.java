@@ -5,11 +5,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.all_users.AllUserStart;
 import org.example.all_users.registration.RegistrationService;
+import org.example.entity.Admin;
+import org.example.entity.Usr;
+import org.example.repository.AdminRepository;
 import org.example.util.UpdateUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.objects.Update;
+
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -19,6 +24,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
     private final RegistrationService registrationService;
     private final AllUserStart allUserStart;
     private final UpdateUtil updateUtil;
+    private final AdminRepository adminRepository;
 
     @Value("${spring.telegram.bot.username}")
     private String botUsername;
@@ -50,7 +56,10 @@ public class TelegramBotService extends TelegramLongPollingBot {
     }
 
     private void processMessage(Update update) {
-        if (updateUtil.getUser(update).isEmpty()) {
+        Optional<Admin> adminOptional = updateUtil.getAdmin(update);
+        Optional<Usr> userOptional = updateUtil.getUser(update);
+
+        if (adminOptional.isEmpty() && userOptional.isEmpty()) {
             registrationService.onUpdateReceived(update);
         } else {
             allUserStart.handleStartState(update);

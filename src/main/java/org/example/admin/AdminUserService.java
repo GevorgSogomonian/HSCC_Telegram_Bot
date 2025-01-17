@@ -8,6 +8,7 @@ import org.example.admin.commands.AdminDeleteEvent;
 import org.example.admin.commands.AdminEditEvent;
 import org.example.admin.commands.AdminNewEvent;
 import org.example.admin.commands.AdminStart;
+import org.example.admin.commands.BaseUserMode;
 import org.example.dto.ChatBotRequest;
 import org.example.dto.ChatBotResponse;
 import org.example.entity.UserState;
@@ -30,8 +31,9 @@ import java.util.function.Consumer;
 @RequiredArgsConstructor
 public class AdminUserService {
     private final Map<String, Consumer<Update>> commandHandlers = new HashMap<>();
+
     private final StateManager stateManager;
-    private final TelegramApiQueue telegramApiQueue;
+//    private final TelegramApiQueue telegramApiQueue;
     private final TelegramSender telegramSender;
     private final AdminDeleteEvent adminDeleteEvent;
     private final AdminEditEvent adminEditEvent;
@@ -39,6 +41,7 @@ public class AdminUserService {
     private final AdminNewEvent adminNewEvent;
     private final AdminAllEvent adminAllEvent;
     private final UpdateUtil updateUtil;
+    private final BaseUserMode baseUserMode;
 
     public void onUpdateRecieved(Update update) {
         if (update.hasCallbackQuery()) {
@@ -85,6 +88,7 @@ public class AdminUserService {
     public void init() {
         commandHandlers.put("Все мероприятия", adminAllEvent::handleAllEventsCommand);
         commandHandlers.put("Новое мероприятие", adminNewEvent::handleNewEventCommand);
+        commandHandlers.put("Режим пользователя", baseUserMode::handleBaseUserMode);
     }
 
     private void processTextMessage(Update update) {

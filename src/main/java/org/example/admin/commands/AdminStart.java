@@ -1,8 +1,8 @@
 package org.example.admin.commands;
 
 import lombok.RequiredArgsConstructor;
+import org.example.entity.Admin;
 import org.example.entity.UserState;
-import org.example.entity.Usr;
 import org.example.state_manager.StateManager;
 import org.example.telegram.api.TelegramSender;
 import org.example.util.UpdateUtil;
@@ -25,29 +25,31 @@ public class AdminStart {
 
     public void handleStartState(Update update) {
         Long chatId = updateUtil.getChatId(update);
+        Admin admin = updateUtil.getAdmin(update).get();
 
-        Usr usr = updateUtil.getUser(update).get();
-
-        System.out.println("Пользователь-админ уже зарегистрирован: " + usr.getUsername());
+        System.out.println("Пользователь-админ уже зарегистрирован: " + admin.getUsername());
 
         SendMessage sendMessage = SendMessage.builder()
                 .chatId(chatId)
-                .text(String.format("""
-                выберите действие""",
-                        usr.getFirstName()))
+                .text("""
+                выберите действие""")
                 .build();
 
         KeyboardButton keyboardButton1 = new KeyboardButton("Новое мероприятие");
         KeyboardButton keyboardButton2 = new KeyboardButton("Все мероприятия");
+        KeyboardButton keyboardButton3 = new KeyboardButton("Режим пользователя");
         KeyboardRow row1 = new KeyboardRow();
         KeyboardRow row2 = new KeyboardRow();
+        KeyboardRow row3 = new KeyboardRow();
+
+        row1.add(keyboardButton1);
+        row2.add(keyboardButton2);
+        row3.add(keyboardButton3);
 
         List<KeyboardRow> keyboardRows = new ArrayList<>();
         keyboardRows.add(row2);
         keyboardRows.add(row1);
-
-        row1.add(keyboardButton1);
-        row2.add(keyboardButton2);
+        keyboardRows.add(row3);
 
         ReplyKeyboardMarkup keyboardMarkup = ReplyKeyboardMarkup.builder()
                 .keyboard(keyboardRows)

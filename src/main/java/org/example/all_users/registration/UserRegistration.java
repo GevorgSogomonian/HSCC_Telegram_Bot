@@ -6,6 +6,7 @@ import org.example.dto.ChatBotResponse;
 import org.example.entity.Role;
 import org.example.entity.UserState;
 import org.example.entity.Usr;
+import org.example.repository.AdminRepository;
 import org.example.repository.UserRepository;
 import org.example.state_manager.StateManager;
 import org.example.util.TemporaryDataService;
@@ -31,6 +32,7 @@ public class UserRegistration {
     private final UserRepository userRepository;
     private final BaseUserService baseUserService;
     private final TemporaryDataService<Usr> temporaryUserService;
+    private final AdminRepository adminRepository;
 
     public void startRegistration(Update update) {
         Long chatId = updateUtil.getChatId(update);
@@ -61,6 +63,9 @@ public class UserRegistration {
         if (!formattedFirstName.isEmpty()) {
             Usr user = temporaryUserService.getTemporaryData(chatId);
             user.setFirstName(firstName);
+            if (updateUtil.getAdmin(update).isPresent()) {
+                user.setIsAdminClone(true);
+            }
             temporaryUserService.putTemporaryData(chatId, user);
 
             telegramSender.sendText(chatId, SendMessage.builder()

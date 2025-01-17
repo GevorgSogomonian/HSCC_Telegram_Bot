@@ -53,6 +53,14 @@ public class BaseStart {
         keyboardRows.add(row2);
         keyboardRows.add(row3);
 
+        if (usr.getIsAdminClone()) {
+            KeyboardButton keyboardButton4 = new KeyboardButton("Вернуться в режим админа");
+            KeyboardRow row4 = new KeyboardRow();
+            row4.add(keyboardButton4);
+
+            keyboardRows.add(row4);
+        }
+
         ReplyKeyboardMarkup keyboardMarkup = ReplyKeyboardMarkup.builder()
                 .keyboard(keyboardRows)
                 .resizeKeyboard(true)

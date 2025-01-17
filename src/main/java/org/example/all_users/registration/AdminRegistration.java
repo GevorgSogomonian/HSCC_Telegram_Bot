@@ -3,9 +3,9 @@ package org.example.all_users.registration;
 import lombok.RequiredArgsConstructor;
 import org.example.admin.AdminUserService;
 import org.example.dto.ChatBotResponse;
-import org.example.entity.Role;
+import org.example.entity.Admin;
 import org.example.entity.UserState;
-import org.example.entity.Usr;
+import org.example.repository.AdminRepository;
 import org.example.repository.UserRepository;
 import org.example.state_manager.StateManager;
 import org.example.util.UserUtilService;
@@ -27,7 +27,7 @@ public class AdminRegistration {
     private final StateManager stateManager;
     private final UserUtilService userUtilService;
     private final AdminUserService adminUserService;
-    private final UserRepository userRepository;
+    private final AdminRepository adminRepository;
 
     public void startRegistration(Update update) {
         Long chatId = updateUtil.getChatId(update);
@@ -50,8 +50,8 @@ public class AdminRegistration {
                     .text("""
                             Ключ верный.""")
                     .build()));
-            Usr user = userUtilService.getNewUser(update, Role.ADMIN);
-            userRepository.save(user);
+            Admin admin = userUtilService.getNewAdmin(update);
+            adminRepository.save(admin);
 
             telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
                     .chatId(chatId)
