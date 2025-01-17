@@ -34,7 +34,7 @@ public class AdminAllEvent {
                     .text("""
                             Мероприятий нет.""")
                     .build());
-            adminStart.handleStartState(update);
+//            adminStart.handleStartState(update);
 
             return;
         }

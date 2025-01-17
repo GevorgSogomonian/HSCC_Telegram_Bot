@@ -61,6 +61,7 @@ public class AdminUserService {
             case ENTERING_EVENT_PICTURE -> adminNewEvent.eventPictureCheck(update);
             case ENTERING_EVENT_START_TIME -> adminNewEvent.handleEventStartTime(update);
             case CHOOSING_EVENT_DURATION -> adminNewEvent.handleEventDuration(update);
+            case ACCEPTING_SAVE_NEW_EVENT -> adminNewEvent.acceptingSavingNewEvent(update);
 
             //Edit event
             case ACCEPTING_EDITING_EVENT_NAME -> adminEditEvent.acceptingEditingEventName(update);
@@ -69,6 +70,10 @@ public class AdminUserService {
             case EDITING_EVENT_DESCRIPTION -> adminEditEvent.checkEditedEventDescription(update);
             case ACCEPTING_EDITING_EVENT_PICTURE -> adminEditEvent.acceptingEditingEventPicture(update);
             case EDITING_EVENT_PICTURE -> adminEditEvent.checkEditedEventPicture(update);
+            case ACCEPTING_EDITING_EVENT_START_TIME -> adminEditEvent.acceptingEditingEventStartTime(update);
+            case EDITING_EVENT_START_TIME -> adminEditEvent.checkNewEventStartTime(update);
+            case ACCEPTING_EDITING_EVENT_DURATION -> adminEditEvent.acceptingEditingEventDuration(update);
+            case EDITING_EVENT_DURATION -> adminEditEvent.checkEventDuration(update);
             case ACCEPTING_SAVE_EDITED_EVENT -> adminEditEvent.acceptingSavingEditedEvent(update);
 
             //Command choosing
@@ -88,8 +93,6 @@ public class AdminUserService {
     }
 
     private void processCallbackQuery(Update update) {
-        CallbackQuery callbackQuery = update.getCallbackQuery();
-        Integer messageId = callbackQuery.getMessage().getMessageId();
         String callbackData = update.getCallbackQuery().getData();
         Long chatId = updateUtil.getChatId(update);
         String[] callbackTextArray = callbackData.split("_");
@@ -97,7 +100,7 @@ public class AdminUserService {
         switch (callbackTextArray[0]) {
             case "delete" -> adminDeleteEvent.processCallbackQuery(update);
             case "edit" -> adminEditEvent.processCallbackQuery(update);
-            case "duration" -> adminNewEvent.handleEventDuration(update);
+            case "new" -> adminNewEvent.processCallbackQuery(update);
             default -> sendUnknownCallbackResponse(chatId);
         }
 

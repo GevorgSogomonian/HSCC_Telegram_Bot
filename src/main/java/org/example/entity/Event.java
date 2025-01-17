@@ -13,6 +13,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.time.Duration;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 @Data
 @Entity
@@ -23,6 +25,8 @@ public class Event {
 
     private Long creatorChatId;
     private String eventName;
+
+    @Column(name = "description", length = 5000)
     private String description;
     private String telegramFileId;
 
@@ -48,15 +52,65 @@ public class Event {
 
     @Override
     public String toString() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM 'в' HH:mm", new Locale("ru"));
+        String formattedStartTime = startTime != null ? startTime.format(formatter) : "Не указано";
+        String formattedDuration;
+
+        if (duration != null) {
+            long hours = duration.toHours();
+            long minutes = duration.toMinutesPart();
+
+            if (minutes == 0) {
+                formattedDuration = hours + " час" + (hours > 1 ? "а" : "");
+            } else if (minutes == 30) {
+                formattedDuration = hours + ",5 часа";
+            } else {
+                formattedDuration = hours + " час" + (hours > 1 ? "а" : "") + " " + minutes + " минут";
+            }
+        } else {
+            formattedDuration = "Не указано";
+        }
+
         return String.format(
                 """
-                        *%s*:
-                        
-                        %s
-                        
-                        Начало: %s
-                        Продолжительность: %s минут""",
-                eventName, description, startTime, duration.toMinutes()
+                *%s*:
+    
+                %s
+    
+                Начало: *%s*
+                Продолжительность: *%s*
+                """,
+                eventName != null ? eventName : "Не указано",
+                description != null ? description : "Описание отсутствует",
+                formattedStartTime,
+                formattedDuration
         );
+    }
+
+    public String getFormattedStartDate() {
+        if (startTime == null) {
+            return "Дата начала не указана";
+        }
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy 'года в' HH:mm", new Locale("ru"));
+
+        return startTime.format(formatter);
+    }
+
+    public String getFormattedDuration() {
+        if (duration == null) {
+            return "Продолжительность не указана";
+        }
+
+        long hours = duration.toHours();
+        long minutes = duration.toMinutesPart();
+
+        if (minutes == 0) {
+            return hours + " час" + (hours > 1 ? "а" : "");
+        } else if (minutes == 30) {
+            return hours + ",5 часа";
+        } else {
+            return hours + " час" + (hours > 1 ? "а" : "") + " " + minutes + " минут";
+        }
     }
 }

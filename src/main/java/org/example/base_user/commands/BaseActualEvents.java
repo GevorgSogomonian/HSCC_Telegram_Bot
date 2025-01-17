@@ -15,6 +15,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -57,6 +58,42 @@ public class BaseActualEvents {
                     telegramSender.sendPhoto(chatId, event.getId(), sendPhoto);
                 }
             });
+
+            String userSubscribedEventIds = user.getSubscribedEventIds();
+
+            if (!userSubscribedEventIds.isBlank()) {
+                List<Event> subscribedEvents = new ArrayList<>();
+                for (String eventId : userSubscribedEventIds.split("_")) {
+                    if (!eventId.isBlank()) {
+                        Optional<Event> eventOptional = eventRepository.findById(Long.parseLong(eventId));
+                        eventOptional.ifPresent(subscribedEvents::add);
+                    }
+                }
+
+                if (!subscribedEvents.isEmpty()) {
+                    for (Event event : subscribedEvents) {
+                        SendPhoto sendPhoto = new SendPhoto();
+                        sendPhoto.setCaption(String.format("""
+                                        *%s*:
+                                        
+                                        %s""",
+                                event.getEventName(), event.getDescription()));
+                        sendPhoto.setChatId(chatId.toString());
+
+                        InlineKeyboardButton button = new InlineKeyboardButton("Отписаться");
+                        button.setCallbackData("unsubscribe_offer-unsubscribe-from-event_" + event.getId());
+
+                        InlineKeyboardMarkup keyboardMarkup = InlineKeyboardMarkup.builder()
+                                .clearKeyboard()
+                                .keyboardRow(List.of(button))
+                                .build();
+
+                        sendPhoto.setReplyMarkup(keyboardMarkup);
+
+                        telegramSender.sendPhoto(chatId, event.getId(), sendPhoto);
+                    }
+                }
+            }
         } else {
             telegramSender.sendText(chatId, SendMessage.builder()
                     .chatId(chatId)
@@ -64,6 +101,5 @@ public class BaseActualEvents {
                             Сейчас нет актуальных мероприятий.""")
                     .build());
         }
-
     }
 }

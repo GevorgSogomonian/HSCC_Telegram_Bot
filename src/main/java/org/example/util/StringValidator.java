@@ -101,7 +101,7 @@ public class StringValidator {
     }
 
     public String validateEventDescription(Long chatId, String eventDescription) {
-        int maxDescriptioonLength = 2000;
+        int maxDescriptionLength = 840;
 
         if (eventDescription.isBlank()) {
             telegramSender.sendText(chatId, SendMessage.builder()
@@ -110,12 +110,12 @@ public class StringValidator {
                     Описание мероприятия не может быть пустым(""")
                     .build());
             return "";
-        } else if (eventDescription.length() > maxDescriptioonLength) {
+        } else if (eventDescription.length() > maxDescriptionLength) {
             telegramSender.sendText(chatId, SendMessage.builder()
                     .chatId(chatId)
                     .text(String.format("""
                     Описание мероприятия не может быть больше %s символов(""",
-                            maxDescriptioonLength))
+                            maxDescriptionLength))
                     .build());
             return "";
         }
