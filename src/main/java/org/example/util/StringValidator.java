@@ -15,36 +15,40 @@ import java.time.format.DateTimeParseException;
 public class StringValidator {
 
     private final TelegramSender telegramSender;
-    private final EventRepository eventRepository;
 
     public String validateAndFormatFirstName(Long chatId, String name) {
         if (name == null || name.length() <= 1) {
             telegramSender.sendText(chatId, SendMessage.builder()
                     .chatId(chatId)
                     .text("""
-                                    Имя должно содержать более одного символа.""")
+                            Имя должно содержать более одного символа.""")
                     .build());
-            return "";
         } else if (name.matches(".*\\d.*")) {
             telegramSender.sendText(chatId, SendMessage.builder()
                     .chatId(chatId)
                     .text("""
-                                    Имя не должно содержать цифры.""")
+                            Имя не должно содержать цифры.""")
                     .build());
-            return "";
+        } else if (name.contains(" ")) {
+            telegramSender.sendText(chatId, SendMessage.builder()
+                            .chatId(chatId)
+                            .text("""
+                                    Введите только имя, без пробелов.""")
+                    .build());
         } else if (!name.matches("[а-яА-Я]+")) {
             telegramSender.sendText(chatId, SendMessage.builder()
                     .chatId(chatId)
                     .text("""
-                                    Имя должно содержать только русские буквы.""")
+                            Имя должно содержать только русские буквы.""")
                     .build());
-            return "";
         } else if (!Character.isUpperCase(name.charAt(0))) {
             name = Character.toUpperCase(name.charAt(0)) + name.substring(1);
             return name;
         } else {
             return name;
         }
+
+        return null;
     }
 
     public String validateAndFormatLastName(Long chatId, String name) {
@@ -123,18 +127,50 @@ public class StringValidator {
         return eventDescription;
     }
 
-    public LocalDateTime validateEventStartTime(Long chatId, String eventStartTime) {
+    public LocalDateTime validateEventStartTime(Long chatId, String userMessage) {
         try {
-            return LocalDateTime.parse(eventStartTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+            LocalDateTime eventStartTime = LocalDateTime.parse(userMessage, DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"));
+            if (eventStartTime.isBefore(LocalDateTime.now())) {
+                telegramSender.sendText(chatId, SendMessage.builder()
+                                .chatId(chatId)
+                                .text("""
+                                        Эта дата уже прошла. Укажите другое время начала мероприятия.""")
+                        .build());
+                return null;
+            }
+            return eventStartTime;
         } catch (DateTimeParseException e) {
             telegramSender.sendText(chatId, SendMessage.builder()
                     .chatId(chatId)
                     .text("""
                                     Некорректный формат даты. Пожалуйста, введите дату в формате:
-                                    `YYYY-MM-DD HH:mm`""")
+                                    `DD.MM.YYYY HH:mm`""")
                     .build());
 
             return null;
         }
+    }
+
+    public String validateEventLocation(Long chatId, String userMessage) {
+        int maxLocationLength = 70;
+
+        if (userMessage.isBlank()) {
+            telegramSender.sendText(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                            Адрес мероприятия не может быть пустым(""")
+                    .build());
+            return null;
+        } else if (userMessage.length() > maxLocationLength) {
+            telegramSender.sendText(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text(String.format("""
+                    Адрес мероприятия не может быть больше %s символов(""",
+                            maxLocationLength))
+                    .build());
+            return null;
+        }
+
+        return userMessage;
     }
 }

@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.ForwardMessage;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.PartialBotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -85,6 +86,8 @@ public class TelegramApiProcessor {
                         telegramBotService.execute(answerCallbackQuery);
                     } else if (method instanceof DeleteMessage deletemessage) {
                         telegramBotService.execute(deletemessage);
+                    } else if (method instanceof ForwardMessage forwardMessage) {
+                        telegramBotService.execute(forwardMessage);
                     }
 
                 } catch (Exception e) {

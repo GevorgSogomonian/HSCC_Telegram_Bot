@@ -18,6 +18,11 @@ import org.example.util.UpdateUtil;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -43,14 +48,19 @@ public class UserRegistration {
                                 Иначе вы не сможете получать бонусы за посещения наших мероприятий.""")
                 .build()));
 
+        Usr newUser = userUtilService.getNewUser(update, Role.USER);
+        temporaryUserService.putTemporaryData(chatId, newUser);
+
+        requestFirstName(chatId);
+    }
+
+    private void requestFirstName(Long chatId) {
         telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
                 .chatId(chatId)
                 .text("""
                                 Введите ваше имя:""")
                 .build()));
 
-        Usr newUser = userUtilService.getNewUser(update, Role.USER);
-        temporaryUserService.putTemporaryData(chatId, newUser);
         stateManager.setUserState(chatId, UserState.ENTERING_FIRSTNAME);
     }
 
@@ -74,13 +84,18 @@ public class UserRegistration {
                                 Ваше имя сохранено!""")
                     .build());
 
-            telegramSender.sendText(chatId, SendMessage.builder()
-                    .chatId(chatId)
-                    .text("""
-                                Введите вашу фамилию:""")
-                    .build());
-            stateManager.setUserState(chatId, UserState.ENTERING_LASTNAME);
+            requestLastName(chatId);
         }
+    }
+
+    private void requestLastName(Long chatId) {
+        telegramSender.sendText(chatId, SendMessage.builder()
+                .chatId(chatId)
+                .text("""
+                                Введите вашу фамилию:""")
+                .build());
+
+        stateManager.setUserState(chatId, UserState.ENTERING_LASTNAME);
     }
 
     public void lastNameCheck(Update update) {
@@ -99,15 +114,91 @@ public class UserRegistration {
                                 Ваша фамилия сохранена!""")
                     .build());
 
-            userRepository.save(user);
-            stateManager.removeUserState(chatId);
+            requestStudyPlace(chatId);
+//            saveNewUser(chatId, user);
+//            baseUserService.onUpdateRecieved(update);
+        }
+    }
 
+    private void requestStudyPlace(Long chatId) {
+        KeyboardButton yesButton = new KeyboardButton("Да");
+        KeyboardButton noButton = new KeyboardButton("Нет");
+
+        ReplyKeyboardMarkup keyboardMarkup = ReplyKeyboardMarkup.builder()
+                .clearKeyboard()
+                .keyboard(List.of(new KeyboardRow(List.of(yesButton, noButton))))
+                .resizeKeyboard(true)
+                .oneTimeKeyboard(true)
+                .build();
+
+        telegramSender.sendText(chatId, SendMessage.builder()
+                        .chatId(chatId)
+                        .replyMarkup(keyboardMarkup)
+                        .text("""
+                                Вы учитесь в ВШЭ?
+                                
+                                Большинство мероприятий проходят на территории ВШЭ. Если вы не являетесь студентом ВШЭ, нам нужно будет сделать на вас проходку.""")
+                .build());
+
+        stateManager.setUserState(chatId, UserState.ENTERING_STUDY_PLACE);
+    }
+
+    public void studyPlaceCheck(Update update) {
+        Long chatId = updateUtil.getChatId(update);
+        String userMessage = update.getMessage().getText().toLowerCase();
+//        Event editedEvent = temporaryEditedEventService.getTemporaryData(chatId);
+        Usr user = temporaryUserService.getTemporaryData(chatId);
+
+        if (userMessage.equals("да")) {
+            user.setIsHSEStudent(true);
+//            requestNewEventLocation(chatId, editedEvent);
+        } else if (userMessage.equals("нет")) {
+            user.setIsHSEStudent(false);
+        } else {
             telegramSender.sendText(chatId, SendMessage.builder()
                     .chatId(chatId)
                     .text("""
-                                Поздравляю, вы зарегистрированы!""")
+                            Введите 'да' или 'нет'""")
                     .build());
-            baseUserService.onUpdateRecieved(update);
         }
+
+        telegramSender.sendText(chatId, SendMessage.builder()
+                .chatId(chatId)
+                .text("""
+                                Ваш выбор сохранён!""")
+                .build());
+
+        saveNewUser(chatId, user);
+        baseUserService.onUpdateRecieved(update);
+
+//        String lastName = update.getMessage().getText();
+//        Long chatId = updateUtil.getChatId(update);
+//
+//        String formattedLastName = stringValidator.validateAndFormatLastName(chatId, lastName);
+//
+//        if (!formattedLastName.isEmpty()) {
+//            Usr user = temporaryUserService.getTemporaryData(chatId);
+//            user.setLastName(lastName);
+//
+//            telegramSender.sendText(chatId, SendMessage.builder()
+//                    .chatId(chatId)
+//                    .text("""
+//                                Ваша фамилия сохранена!""")
+//                    .build());
+//
+//            saveNewUser(chatId, user);
+//            baseUserService.onUpdateRecieved(update);
+//        }
+    }
+
+    private void saveNewUser(Long chatId, Usr user) {
+        userRepository.save(user);
+        stateManager.removeUserState(chatId);
+
+        telegramSender.sendText(chatId, SendMessage.builder()
+                .chatId(chatId)
+                .text("""
+                                Поздравляю, вы зарегистрированы!""")
+                .build());
     }
 }

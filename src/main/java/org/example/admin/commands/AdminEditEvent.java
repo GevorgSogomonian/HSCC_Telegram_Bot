@@ -192,7 +192,7 @@ public class AdminEditEvent {
         telegramSender.sendText(chatId, SendMessage.builder()
                         .chatId(chatId)
                         .text("""
-                                Хотите изменить название мероприятия?""")
+                                Хотите изменить *название* мероприятия?""")
                         .replyMarkup(keyboardMarkup)
                 .build());
 
@@ -285,7 +285,7 @@ public class AdminEditEvent {
         telegramSender.sendText(chatId, SendMessage.builder()
                 .chatId(chatId)
                 .text("""
-                                Хотите изменить описание мероприятия?""")
+                                Хотите изменить *описание* мероприятия?""")
                 .replyMarkup(keyboardMarkup)
                 .build());
 
@@ -366,7 +366,7 @@ public class AdminEditEvent {
         telegramSender.sendText(chatId, SendMessage.builder()
                 .chatId(chatId)
                 .text("""
-                        Хотите изменить обложку мероприятия?""")
+                        Хотите изменить *обложку* мероприятия?""")
                 .replyMarkup(keyboardMarkup)
                 .build());
 
@@ -455,7 +455,7 @@ public class AdminEditEvent {
         telegramSender.sendText(chatId, SendMessage.builder()
                 .chatId(chatId)
                 .text("""
-                        Хотите изменить время начала мероприятия?""")
+                        Хотите изменить *время начала* мероприятия?""")
                 .replyMarkup(keyboardMarkup)
                 .build());
 
@@ -493,7 +493,7 @@ public class AdminEditEvent {
                 .chatId(chatId)
                 .text("""
                 Введите новые дату и время начала мероприятия в формате:
-                `YYYY-MM-DD HH:mm`""")
+                `DD.MM.YYYY HH:mm`""")
                 .build());
 
         stateManager.setUserState(chatId, UserState.EDITING_EVENT_START_TIME);
@@ -533,7 +533,7 @@ public class AdminEditEvent {
         telegramSender.sendText(chatId, SendMessage.builder()
                 .chatId(chatId)
                 .text("""
-                        Хотите изменить продолжительность мероприятия?""")
+                        Хотите изменить *продолжительность* мероприятия?""")
                 .replyMarkup(keyboardMarkup)
                 .build());
 
@@ -548,7 +548,7 @@ public class AdminEditEvent {
         if (userMessage.equals("да")) {
             requestNewEventDuration(chatId, editedEvent);
         } else if (userMessage.equals("нет")) {
-            offerSaveEditedEvent(chatId);
+            offerNewEventLocation(chatId);
         } else {
             telegramSender.sendText(chatId, SendMessage.builder()
                     .chatId(chatId)
@@ -627,8 +627,7 @@ public class AdminEditEvent {
                         .showAlert(false)
                         .build());
 
-                offerSaveEditedEvent(chatId);
-//                stateManager.setUserState(chatId, UserState.A);
+                offerNewEventLocation(chatId);
             } else {
                 telegramSender.sendText(chatId, SendMessage.builder()
                         .chatId(chatId)
@@ -636,15 +635,88 @@ public class AdminEditEvent {
                                     Некорректный выбор. Попробуйте снова.""")
                         .build());
             }
+        }
+    }
 
-//        AnswerCallbackQuery answer = new AnswerCallbackQuery();
-//        answer.setCallbackQueryId(callbackQuery.getId());
-//        answer.setText("Команда обработана.");
-//        answer.setShowAlert(true);
-//
-//        telegramApiQueue.addRequest(new ChatBotRequest(callbackQuery.getFrom().getId(), answer));
+    private void offerNewEventLocation(Long chatId) {
+        KeyboardButton yesButton = new KeyboardButton("Да");
+        KeyboardButton noButton = new KeyboardButton("Нет");
 
-//            adminStart.handleStartState(update);
+        ReplyKeyboardMarkup keyboardMarkup = ReplyKeyboardMarkup.builder()
+                .clearKeyboard()
+                .keyboard(List.of(new KeyboardRow(List.of(yesButton, noButton))))
+                .resizeKeyboard(true)
+                .oneTimeKeyboard(true)
+                .build();
+
+        telegramSender.sendText(chatId, SendMessage.builder()
+                .chatId(chatId)
+                .text("""
+                        Хотите изменить *место проведения* мероприятия?""")
+                .replyMarkup(keyboardMarkup)
+                .build());
+
+        stateManager.setUserState(chatId, UserState.ACCEPTING_EDITING_EVENT_LOCATION);
+    }
+
+    public void acceptingEditingEventLocation(Update update) {
+        Long chatId = updateUtil.getChatId(update);
+        String userMessage = update.getMessage().getText().toLowerCase();
+        Event editedEvent = temporaryEditedEventService.getTemporaryData(chatId);
+
+        if (userMessage.equals("да")) {
+            requestNewEventLocation(chatId, editedEvent);
+        } else if (userMessage.equals("нет")) {
+            offerSaveEditedEvent(chatId);
+        } else {
+            telegramSender.sendText(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                            Введите 'да' или 'нет'""")
+                    .build());
+        }
+    }
+
+    private void requestNewEventLocation(Long chatId, Event editedEvent) {
+        telegramSender.sendText(chatId, SendMessage.builder()
+                .chatId(chatId)
+                .text("""
+                        Текущее место проведения мероприятия:""")
+                .build());
+
+        telegramSender.sendText(chatId, SendMessage.builder()
+                        .chatId(chatId)
+                        .text(String.format("""
+                                *%s*""", editedEvent.getEventLocation()))
+                .build());
+
+        telegramSender.sendText(chatId, SendMessage.builder()
+                .chatId(chatId)
+                .text("""
+                        Введите новый адрес:""")
+                .build());
+
+        stateManager.setUserState(chatId, UserState.EDITING_EVENT_LOCATION);
+    }
+
+    public void checkNewEventLocation(Update update) {
+        Long chatId = updateUtil.getChatId(update);
+        String userMessage = update.getMessage().getText();
+//        LocalDateTime validatedEventStartTime = stringValidator.validateEventStartTime(chatId, userMessage);
+        String eventLocation = stringValidator.validateEventLocation(chatId, userMessage);
+
+        if (eventLocation != null) {
+            Event event = temporaryEditedEventService.getTemporaryData(chatId);
+            event.setEventLocation(eventLocation);
+            temporaryEditedEventService.putTemporaryData(chatId, event);
+
+            telegramSender.sendText(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                            Новое место проведения мероприятия сохранено.""")
+                    .build());
+
+            offerSaveEditedEvent(chatId);
         }
     }
 
@@ -662,7 +734,7 @@ public class AdminEditEvent {
         telegramSender.sendText(chatId, SendMessage.builder()
                 .chatId(chatId)
                 .text("""
-                        Сохранить отредактированное мероприятие?""")
+                        *Сохранить* отредактированное мероприятие?""")
                 .replyMarkup(keyboardMarkup)
                 .build());
 

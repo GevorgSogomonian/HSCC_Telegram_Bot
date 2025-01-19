@@ -6,20 +6,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.admin.commands.AdminAllEvent;
 import org.example.admin.commands.AdminDeleteEvent;
 import org.example.admin.commands.AdminEditEvent;
+import org.example.admin.commands.AdminMessageToSubscribers;
 import org.example.admin.commands.AdminNewEvent;
 import org.example.admin.commands.AdminStart;
 import org.example.admin.commands.BaseUserMode;
-import org.example.dto.ChatBotRequest;
-import org.example.dto.ChatBotResponse;
+import org.example.admin.commands.AdminMessageToAll;
 import org.example.entity.UserState;
 import org.example.state_manager.StateManager;
-import org.example.telegram.api.TelegramApiQueue;
 import org.example.telegram.api.TelegramSender;
 import org.example.util.UpdateUtil;
 import org.springframework.stereotype.Service;
-import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.util.HashMap;
@@ -42,6 +39,8 @@ public class AdminUserService {
     private final AdminAllEvent adminAllEvent;
     private final UpdateUtil updateUtil;
     private final BaseUserMode baseUserMode;
+    private final AdminMessageToAll adminMessageToAll;
+    private final AdminMessageToSubscribers adminMessageToSubscribers;
 
     public void onUpdateRecieved(Update update) {
         if (update.hasCallbackQuery()) {
@@ -64,6 +63,7 @@ public class AdminUserService {
             case ENTERING_EVENT_PICTURE -> adminNewEvent.eventPictureCheck(update);
             case ENTERING_EVENT_START_TIME -> adminNewEvent.handleEventStartTime(update);
             case CHOOSING_EVENT_DURATION -> adminNewEvent.handleEventDuration(update);
+            case ENTERING_EVENT_LOCATION -> adminNewEvent.handleEventLocation(update);
             case ACCEPTING_SAVE_NEW_EVENT -> adminNewEvent.acceptingSavingNewEvent(update);
 
             //Edit event
@@ -77,7 +77,15 @@ public class AdminUserService {
             case EDITING_EVENT_START_TIME -> adminEditEvent.checkNewEventStartTime(update);
             case ACCEPTING_EDITING_EVENT_DURATION -> adminEditEvent.acceptingEditingEventDuration(update);
             case EDITING_EVENT_DURATION -> adminEditEvent.checkEventDuration(update);
+            case ACCEPTING_EDITING_EVENT_LOCATION -> adminEditEvent.acceptingEditingEventLocation(update);
+            case EDITING_EVENT_LOCATION -> adminEditEvent.checkNewEventLocation(update);
             case ACCEPTING_SAVE_EDITED_EVENT -> adminEditEvent.acceptingSavingEditedEvent(update);
+
+            //Forward messages to all
+            case ACCEPTING_FORWARD_MESSAGE_TO_ALL -> adminMessageToAll.acceptingForwardMessagesToAll(update);
+
+            //Forward messages to event subscribers
+            case ACCEPTING_FORWARD_MESSAGE_TO_EVENT_SUBSCRIBERS -> adminMessageToSubscribers.acceptingForwardMessageToEventSubscribers(update);
 
             //Command choosing
             case COMMAND_CHOOSING -> processTextMessage(update);
@@ -88,6 +96,7 @@ public class AdminUserService {
     public void init() {
         commandHandlers.put("Все мероприятия", adminAllEvent::handleAllEventsCommand);
         commandHandlers.put("Новое мероприятие", adminNewEvent::handleNewEventCommand);
+        commandHandlers.put("Сообщение всем", adminMessageToAll::handleMessageToAllCommand);
         commandHandlers.put("Режим пользователя", baseUserMode::handleBaseUserMode);
     }
 
@@ -105,6 +114,8 @@ public class AdminUserService {
             case "delete" -> adminDeleteEvent.processCallbackQuery(update);
             case "edit" -> adminEditEvent.processCallbackQuery(update);
             case "new" -> adminNewEvent.processCallbackQuery(update);
+            case "message-to-all" -> adminMessageToAll.processCallbackQuery(update);
+            case "message-to-subscribers" -> adminMessageToSubscribers.processCallbackQuery(update);
             default -> sendUnknownCallbackResponse(chatId);
         }
 

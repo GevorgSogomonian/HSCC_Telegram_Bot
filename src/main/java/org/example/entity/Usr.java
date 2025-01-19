@@ -30,4 +30,5 @@ public class Usr {
     private Integer numberOfMissedEvents;
     private String subscribedEventIds;
     private Boolean isAdminClone;
+    private Boolean isHSEStudent;
 }

@@ -37,19 +37,23 @@ public class AdminStart {
 
         KeyboardButton keyboardButton1 = new KeyboardButton("Новое мероприятие");
         KeyboardButton keyboardButton2 = new KeyboardButton("Все мероприятия");
-        KeyboardButton keyboardButton3 = new KeyboardButton("Режим пользователя");
+        KeyboardButton keyboardButton3 = new KeyboardButton("Сообщение всем");
+        KeyboardButton keyboardButton4 = new KeyboardButton("Режим пользователя");
         KeyboardRow row1 = new KeyboardRow();
         KeyboardRow row2 = new KeyboardRow();
         KeyboardRow row3 = new KeyboardRow();
+        KeyboardRow row4 = new KeyboardRow();
 
         row1.add(keyboardButton1);
         row2.add(keyboardButton2);
         row3.add(keyboardButton3);
+        row4.add(keyboardButton4);
 
         List<KeyboardRow> keyboardRows = new ArrayList<>();
         keyboardRows.add(row2);
         keyboardRows.add(row1);
         keyboardRows.add(row3);
+        keyboardRows.add(row4);
 
         ReplyKeyboardMarkup keyboardMarkup = ReplyKeyboardMarkup.builder()
                 .keyboard(keyboardRows)

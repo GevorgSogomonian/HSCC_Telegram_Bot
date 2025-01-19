@@ -39,12 +39,14 @@ public class BaseUserInfo {
                                     Фамилия: *%s*
                                     Мероприятий посетил: *%s*
                                     Мероприятий хотел посетить, но пропустил: *%s*
-                                    ID: *%s*""",
+                                    ID: *%s*
+                                    *%s*""",
                                     user.getFirstName(),
                                     user.getLastName(),
                                     user.getNumberOfVisitedEvents(),
                                     user.getNumberOfMissedEvents(),
-                                    user.getUserId()))
+                                    user.getUserId(),
+                                    user.getIsHSEStudent() ? "Студент ВШЭ" : "Не студент ВШЭ"))
                     .build());
         } else {
             telegramSender.sendText(chatId, SendMessage.builder()

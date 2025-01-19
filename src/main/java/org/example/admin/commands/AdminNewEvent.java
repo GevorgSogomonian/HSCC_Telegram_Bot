@@ -120,34 +120,6 @@ public class AdminNewEvent {
                 .build());
 
         requestEventName(chatId);
-
-//        if (eventOptional.isPresent()) {
-//            Event editedEvent = eventOptional.get();
-//            temporaryEventService.putTemporaryData(chatId, editedEvent);
-//            telegramSender.sendText(chatId, SendMessage.builder()
-//                    .chatId(chatId)
-//                    .text("""
-//                            Создаём новое мероприятие.""")
-//                    .build());
-//
-//            telegramSender.deleteMessage(chatId, DeleteMessage.builder()
-//                    .chatId(chatId)
-//                    .messageId(messageId)
-//                    .build());
-//
-//            requestEventName(chatId);
-//        } else {
-//            telegramSender.sendText(chatId, SendMessage.builder()
-//                    .chatId(chatId)
-//                    .text("""
-//                                    Мероприятие не найдено!""")
-//                    .build());
-//
-//            telegramSender.deleteMessage(chatId, DeleteMessage.builder()
-//                    .chatId(chatId)
-//                    .messageId(messageId)
-//                    .build());
-//        }
     }
 
     private void cancelEditingEvent(Long chatId, Integer messageId) {
@@ -171,7 +143,7 @@ public class AdminNewEvent {
         telegramSender.sendText(chatId, SendMessage.builder()
                 .chatId(chatId)
                 .text("""
-                        Введите название мероприятия:""")
+                        Введите *название* мероприятия:""")
                 .replyMarkup(replyKeyboardRemove)
                 .build());
 
@@ -213,7 +185,7 @@ public class AdminNewEvent {
         telegramSender.sendText(chatId, SendMessage.builder()
                 .chatId(chatId)
                 .text("""
-                                Введите описание мероприятия:""")
+                        Введите *описание* мероприятия:""")
                 .build());
 
         stateManager.setUserState(chatId, UserState.ENTERING_EVENT_DESCRIPTION);
@@ -243,7 +215,7 @@ public class AdminNewEvent {
         telegramSender.sendText(chatId, SendMessage.builder()
                 .chatId(chatId)
                 .text("""
-                                Пришлите обложку мероприятия:""")
+                                Пришлите *обложку* мероприятия:""")
                 .build());
 
         stateManager.setUserState(chatId, UserState.ENTERING_EVENT_PICTURE);
@@ -281,8 +253,9 @@ public class AdminNewEvent {
         telegramSender.sendText(chatId, SendMessage.builder()
                         .chatId(chatId)
                         .text("""
-                Введите дату и время начала мероприятия в формате:
-                `YYYY-MM-DD HH:mm`""")
+                Введите *дату и время начала* мероприятия в формате:
+                
+                `DD.MM.YYYY HH:mm`""")
                 .build());
 
         stateManager.setUserState(chatId, UserState.ENTERING_EVENT_START_TIME);
@@ -319,7 +292,7 @@ public class AdminNewEvent {
         telegramSender.sendText(chatId, SendMessage.builder()
                         .chatId(chatId)
                         .text("""
-                                Выберите продолжительность мероприятия:""")
+                                Выберите *продолжительность* мероприятия:""")
                         .replyMarkup(markup)
                 .build());
 
@@ -363,7 +336,7 @@ public class AdminNewEvent {
                         .showAlert(false)
                         .build());
 
-                offerSaveNewEvent(chatId);
+                requestEventLocation(chatId);
             } else {
                 telegramSender.sendText(chatId, SendMessage.builder()
                         .chatId(chatId)
@@ -371,6 +344,36 @@ public class AdminNewEvent {
                                     Некорректный выбор. Попробуйте снова.""")
                         .build());
             }
+        }
+    }
+
+    private void requestEventLocation(Long chatId) {
+        telegramSender.sendText(chatId, SendMessage.builder()
+                .chatId(chatId)
+                .text("""
+                Укажите *место проведения* мероприятия:""")
+                .build());
+
+        stateManager.setUserState(chatId, UserState.ENTERING_EVENT_LOCATION);
+    }
+
+    public void handleEventLocation(Update update) {
+        Long chatId = updateUtil.getChatId(update);
+        String userMessage = update.getMessage().getText();
+        String eventLocation = stringValidator.validateEventLocation(chatId, userMessage);
+
+        if (eventLocation != null) {
+            Event event = temporaryEventService.getTemporaryData(chatId);
+            event.setEventLocation(eventLocation);
+            temporaryEventService.putTemporaryData(chatId, event);
+
+            telegramSender.sendText(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                            Место проведения мероприятия сохранено.""")
+                    .build());
+
+            offerSaveNewEvent(chatId);
         }
     }
 
@@ -388,7 +391,7 @@ public class AdminNewEvent {
         telegramSender.sendText(chatId, SendMessage.builder()
                 .chatId(chatId)
                 .text("""
-                        Сохранить новое мероприятие?""")
+                        *Сохранить* новое мероприятие?""")
                 .replyMarkup(keyboardMarkup)
                 .build());
 
@@ -427,17 +430,6 @@ public class AdminNewEvent {
 
     private void saveEditedEvent(Update update) {
         Long chatId = updateUtil.getChatId(update);
-//        Event newEvent = temporaryEventService.getTemporaryData(chatId);
-//        Event oldEvent = eventRepository.findById(editedEvent.getId()).get();
-//        String oldImageUrl = oldEvent.getImageUrl();
-
-//        if (oldImageUrl != null && !oldImageUrl.isBlank() && !editedEvent.getImageUrl().equals(oldImageUrl)) {
-//            String bucketName = "pictures";
-//            imageService.deleteImage(bucketName, oldImageUrl);
-//            System.out.println("""
-//                    Сработал удаление)""");
-//        }
-
         Thread pictureSaveThread = new Thread(() -> {
             try {
                 Thread.sleep(5000);

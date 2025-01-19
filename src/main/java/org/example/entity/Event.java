@@ -26,8 +26,9 @@ public class Event {
     private Long creatorChatId;
     private String eventName;
 
-    @Column(name = "description", length = 5000)
+    @Column(name = "description", length = 1024)
     private String description;
+    private String eventLocation;
     private String telegramFileId;
 
     @CreationTimestamp
@@ -79,11 +80,12 @@ public class Event {
     
                 Начало: *%s*
                 Продолжительность: *%s*
-                """,
+                Место проведения: *%s*""",
                 eventName != null ? eventName : "Не указано",
                 description != null ? description : "Описание отсутствует",
                 formattedStartTime,
-                formattedDuration
+                formattedDuration,
+                eventLocation
         );
     }
 

@@ -36,6 +36,7 @@ public class RegistrationService {
             //user
             case ENTERING_FIRSTNAME -> userRegistration.firstNameCheck(update);
             case ENTERING_LASTNAME -> userRegistration.lastNameCheck(update);
+            case ENTERING_STUDY_PLACE -> userRegistration.studyPlaceCheck(update);
 
             //admin
             case ENTERING_SPECIAL_KEY -> adminRegistration.adminPasswordCheck(update);
