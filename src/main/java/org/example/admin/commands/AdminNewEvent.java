@@ -8,6 +8,7 @@ import org.example.repository.EventRepository;
 import org.example.state_manager.StateManager;
 import org.example.telegram.api.TelegramApiQueue;
 import org.example.telegram.api.TelegramSender;
+import org.example.util.ActionsChainUtil;
 import org.example.util.StringValidator;
 import org.example.util.TemporaryDataService;
 import org.example.util.UpdateUtil;
@@ -19,11 +20,8 @@ import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -42,6 +40,7 @@ public class AdminNewEvent {
     private final AdminStart adminStart;
     private final StringValidator stringValidator;
     private final TemporaryDataService<Event> temporaryEventService;
+    private final ActionsChainUtil actionsChainUtil;
 
     public void processCallbackQuery(Update update) {
         CallbackQuery callbackQuery = update.getCallbackQuery();
@@ -51,7 +50,6 @@ public class AdminNewEvent {
         String[] callbackTextArray = callbackData.split("_");
 
         switch (callbackTextArray[1]) {
-//            case "offer-editing-event" -> handleEditEvent(chatId, callbackData, messageId);
             case "accept-creating-new-event" -> acceptCreatingNewEvent(chatId, messageId);
             case "cancel-creating-new-event" -> cancelEditingEvent(chatId, messageId);
             case "duration" -> handleEventDuration(update);
@@ -76,7 +74,6 @@ public class AdminNewEvent {
 
     public void handleNewEventCommand(Update update) {
         Long chatId = updateUtil.getChatId(update);
-//        String eventName = eventOptional.get().getEventName();
         InlineKeyboardButton yesButton = InlineKeyboardButton.builder()
                 .text("Да")
                 .callbackData("new_accept-creating-new-event")
@@ -101,10 +98,6 @@ public class AdminNewEvent {
     }
 
     private void acceptCreatingNewEvent(Long chatId, Integer messageId) {
-//        Long eventId = Long.parseLong(callbackText.split("_")[2]);
-//        Optional<Event> eventOptional = eventRepository.findById(eventId);
-
-//        Event editedEvent = eventOptional.get();
         Event newEvent = new Event();
         newEvent.setCreatorChatId(chatId);
         temporaryEventService.putTemporaryData(chatId, newEvent);
@@ -378,57 +371,25 @@ public class AdminNewEvent {
     }
 
     private void offerSaveNewEvent(Long chatId) {
-        KeyboardButton yesButton = new KeyboardButton("Да");
-        KeyboardButton noButton = new KeyboardButton("Нет");
-
-        ReplyKeyboardMarkup keyboardMarkup = ReplyKeyboardMarkup.builder()
-                .clearKeyboard()
-                .keyboard(List.of(new KeyboardRow(List.of(yesButton, noButton))))
-                .resizeKeyboard(true)
-                .oneTimeKeyboard(true)
-                .build();
-
-        telegramSender.sendText(chatId, SendMessage.builder()
-                .chatId(chatId)
-                .text("""
-                        *Сохранить* новое мероприятие?""")
-                .replyMarkup(keyboardMarkup)
-                .build());
-
-        stateManager.setUserState(chatId, UserState.ACCEPTING_SAVE_NEW_EVENT);
+        actionsChainUtil.offerNextAction(chatId, """
+                *Сохранить* новое мероприятие?""", UserState.ACCEPTING_SAVE_NEW_EVENT);
     }
 
     public void acceptingSavingNewEvent(Update update) {
-        Long chatId = updateUtil.getChatId(update);
-        String userMessage = update.getMessage().getText().toLowerCase();
+        Boolean answer = actionsChainUtil.checkAnswer(update);
 
-        if (userMessage.equals("да")) {
-            saveEditedEvent(update);
-            telegramSender.sendText(chatId, SendMessage.builder()
-                    .chatId(chatId)
-                    .text("""
-                            Новое мероприятие сохранено.""")
-                    .build());
-            stateManager.setUserState(chatId, UserState.COMMAND_CHOOSING);
-            adminStart.handleStartState(update);
-        } else if (userMessage.equals("нет")) {
-            telegramSender.sendText(chatId, SendMessage.builder()
-                    .chatId(chatId)
-                    .text("""
-                            Новое мероприятие не сохранено.""")
-                    .build());
-            stateManager.setUserState(chatId, UserState.COMMAND_CHOOSING);
-            adminStart.handleStartState(update);
+        if (answer == null) {
+            return;
+        }
+
+        if (answer) {
+            acceptSavingNewEvent(update);
         } else {
-            telegramSender.sendText(chatId, SendMessage.builder()
-                    .chatId(chatId)
-                    .text("""
-                            Введите 'да' или 'нет'""")
-                    .build());
+            cancelSavingNewEvent(update);
         }
     }
 
-    private void saveEditedEvent(Update update) {
+    private void acceptSavingNewEvent(Update update) {
         Long chatId = updateUtil.getChatId(update);
         Thread pictureSaveThread = new Thread(() -> {
             try {
@@ -441,6 +402,25 @@ public class AdminNewEvent {
                     Сработал сохранение)""");
         });
         pictureSaveThread.start();
+
+        telegramSender.sendText(chatId, SendMessage.builder()
+                .chatId(chatId)
+                .text("""
+                            Новое мероприятие сохранено.""")
+                .build());
+        stateManager.setUserState(chatId, UserState.COMMAND_CHOOSING);
+        adminStart.handleStartState(update);
+    }
+
+    private void cancelSavingNewEvent(Update update) {
+        Long chatId = updateUtil.getChatId(update);
+        telegramSender.sendText(chatId, SendMessage.builder()
+                .chatId(chatId)
+                .text("""
+                        Новое мероприятие не сохранено.""")
+                .build());
+        stateManager.setUserState(chatId, UserState.COMMAND_CHOOSING);
+        adminStart.handleStartState(update);
     }
 
     private InlineKeyboardButton createDurationButton(String text, String callbackData) {

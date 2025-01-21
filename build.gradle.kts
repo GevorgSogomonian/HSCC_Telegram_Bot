@@ -22,7 +22,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
     // Database
-    runtimeOnly("org.postgresql:postgresql")
+    implementation("org.quartz-scheduler:quartz:2.3.2")
+    implementation("org.postgresql:postgresql:42.6.0")
 
     // Telegram Bot API
     implementation("org.telegram:telegrambots:6.5.0")
@@ -50,6 +51,7 @@ dependencies {
 
     implementation("io.minio:minio:8.4.3")
     implementation("net.coobird:thumbnailator:0.4.20")
+    implementation ("org.springframework.boot:spring-boot-starter-quartz")
 }
 
 tasks.test {

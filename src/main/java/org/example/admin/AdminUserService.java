@@ -119,12 +119,12 @@ public class AdminUserService {
             default -> sendUnknownCallbackResponse(chatId);
         }
 
-//        AnswerCallbackQuery answer = new AnswerCallbackQuery();
-//        answer.setCallbackQueryId(callbackQuery.getId());
-//        answer.setText("Команда обработана.");
-//        answer.setShowAlert(true);
+//        AnswerCallbackQuery answerCallback = new AnswerCallbackQuery();
+//        answerCallback.setCallbackQueryId(callbackQuery.getId());
+//        answerCallback.setText("Команда обработана.");
+//        answerCallback.setShowAlert(true);
 //
-//        telegramApiQueue.addRequest(new ChatBotRequest(callbackQuery.getFrom().getId(), answer));
+//        telegramApiQueue.addRequest(new ChatBotRequest(callbackQuery.getFrom().getId(), answerCallback));
     }
 
     private void sendUnknownCallbackResponse(Long chatId) {
