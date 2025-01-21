@@ -82,8 +82,7 @@ public class AdminAllEvent {
 
             InlineKeyboardMarkup inlineKeyboardMarkup = InlineKeyboardMarkup.builder()
                     .clearKeyboard()
-                    .keyboardRow(List.of(editButton))
-                    .keyboardRow(List.of(deleteButton))
+                    .keyboardRow(List.of(editButton, deleteButton))
                     .keyboardRow(List.of(registrateButton))
                     .keyboardRow(List.of(messageButton))
                     .build();
