@@ -31,24 +31,24 @@ spring:
 #        quartz:
 #          jobStore:
 #            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
-  quartz:
-    job-store-type: memory
-    scheduler:
-      auto-startup: true
-      instance-name: NotificationScheduler
-    properties:
-      org:
-        quartz:
-          threadPool:
-            threadCount: 5
-
-logging:
-  level:
-    org:
-      quartz: DEBUG
-      hibernate:
-        SQL: DEBUG
-        type: TRACE
+#  quartz:
+#    job-store-type: memory
+#    scheduler:
+#      auto-startup: true
+#      instance-name: NotificationScheduler
+#    properties:
+#      org:
+#        quartz:
+#          threadPool:
+#            threadCount: 5
+#
+#logging:
+#  level:
+#    org:
+#      quartz: DEBUG
+#      hibernate:
+#        SQL: DEBUG
+#        type: TRACE
 
 image:
   maxSizeHorizontal: 900

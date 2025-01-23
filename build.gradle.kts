@@ -51,7 +51,7 @@ dependencies {
 
     implementation("io.minio:minio:8.4.3")
     implementation("net.coobird:thumbnailator:0.4.20")
-    implementation ("org.springframework.boot:spring-boot-starter-quartz")
+//    implementation ("org.springframework.boot:spring-boot-starter-quartz")
 }
 
 tasks.test {

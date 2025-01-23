@@ -3,19 +3,10 @@ package org.example.base_user.commands;
 import lombok.RequiredArgsConstructor;
 import org.example.entity.Event;
 import org.example.entity.Usr;
-import org.example.notifications.EventReminderJob;
-import org.example.notifications.NotificationScheduler;
 import org.example.repository.EventRepository;
 import org.example.repository.UserRepository;
 import org.example.telegram.api.TelegramSender;
 import org.example.util.UpdateUtil;
-import org.quartz.Job;
-import org.quartz.JobDataMap;
-import org.quartz.JobExecutionContext;
-import org.quartz.JobExecutionException;
-import org.quartz.Scheduler;
-import org.quartz.SchedulerException;
-import org.quartz.impl.StdSchedulerFactory;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -25,9 +16,6 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,7 +27,6 @@ public class BaseSubscribeToEvent {
     private final TelegramSender telegramSender;
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
-    private final NotificationScheduler notificationScheduler;
 
     public void processCallbackQuery(Update update) {
         CallbackQuery callbackQuery = update.getCallbackQuery();
@@ -136,35 +123,35 @@ public class BaseSubscribeToEvent {
             userRepository.save(user);
 
 
-            Scheduler scheduler;
-            // Создание экземпляра Scheduler
-            try {
-                scheduler = StdSchedulerFactory.getDefaultScheduler();
-                scheduler.start();
-            } catch (SchedulerException e) {
-                throw new RuntimeException(e);
-            }
-
-            // Данные для задания
-            JobDataMap jobDataMap = new JobDataMap();
-            jobDataMap.put(chatId.toString(), "Напоминание о мероприятии!");
-
-            // Время запуска уведомления (через 1 минуту от текущего времени)
-            LocalDateTime notificationTime = LocalDateTime.now().plusMinutes(1);
-
-            // Создание и запуск задачи
-            NotificationScheduler notificationScheduler = new NotificationScheduler(scheduler);
-            try {
-                notificationScheduler.scheduleNotification(
-                        "EventReminderJob",
-                        "EventGroup",
-                        notificationTime,
-                        EventReminderJob.class,
-                        jobDataMap
-                );
-            } catch (SchedulerException e) {
-                throw new RuntimeException(e);
-            }
+//            Scheduler scheduler;
+//            // Создание экземпляра Scheduler
+//            try {
+//                scheduler = StdSchedulerFactory.getDefaultScheduler();
+//                scheduler.start();
+//            } catch (SchedulerException e) {
+//                throw new RuntimeException(e);
+//            }
+//
+//            // Данные для задания
+//            JobDataMap jobDataMap = new JobDataMap();
+//            jobDataMap.put(chatId.toString(), "Напоминание о мероприятии!");
+//
+//            // Время запуска уведомления (через 1 минуту от текущего времени)
+//            LocalDateTime notificationTime = LocalDateTime.now().plusMinutes(1);
+//
+//            // Создание и запуск задачи
+//            NotificationScheduler notificationScheduler = new NotificationScheduler(scheduler);
+//            try {
+//                notificationScheduler.scheduleNotification(
+//                        "EventReminderJob",
+//                        "EventGroup",
+//                        notificationTime,
+//                        EventReminderJob.class,
+//                        jobDataMap
+//                );
+//            } catch (SchedulerException e) {
+//                throw new RuntimeException(e);
+//            }
 
 
 //            LocalDateTime notificationTime = event.getStartTime().minusDays(1); // За 24 часа до мероприятия
