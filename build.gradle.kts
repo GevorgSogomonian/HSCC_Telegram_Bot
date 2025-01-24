@@ -22,8 +22,9 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
     // Database
-    implementation("org.quartz-scheduler:quartz:2.3.2")
+//    implementation("org.quartz-scheduler:quartz:2.3.2")
     implementation("org.postgresql:postgresql:42.6.0")
+    implementation("org.liquibase:liquibase-core:4.23.1")
 
     // Telegram Bot API
     implementation("org.telegram:telegrambots:6.5.0")

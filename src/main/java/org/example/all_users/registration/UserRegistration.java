@@ -37,7 +37,6 @@ public class UserRegistration {
     private final UserRepository userRepository;
     private final BaseUserService baseUserService;
     private final TemporaryDataService<Usr> temporaryUserService;
-    private final AdminRepository adminRepository;
 
     public void startRegistration(Update update) {
         Long chatId = updateUtil.getChatId(update);

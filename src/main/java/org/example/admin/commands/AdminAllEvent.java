@@ -48,10 +48,11 @@ public class AdminAllEvent {
 
         System.out.println(eventSubscribersMap);
 
+
         for (String eventIds : allUsersSubscribeEventIds) {
             String[] eventIdsArray = eventIds.split("_");
             for (String eventIdString : eventIdsArray) {
-                if (eventIdString != null) {
+                if (eventIdString != null && !eventIdString.isBlank()) {
                     Long eventIdLong = Long.parseLong(eventIdString);
                     if (eventSubscribersMap.containsKey(eventIdLong)) {
                         eventSubscribersMap.put(eventIdLong, eventSubscribersMap.get(eventIdLong) + 1);

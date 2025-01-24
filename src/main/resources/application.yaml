@@ -1,16 +1,17 @@
 spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/hse_database
-    username: hse_user
-    password: hse_password
   jpa:
     hibernate:
       ddl-auto: update
 
+  datasource:
+    url: jdbc:postgresql://localhost:5432/hse_database
+    username: hse_user
+    password: hse_password
+
   telegram:
     bot:
-      username: hscc_hse_bot
-      token: 8113684980:AAFEpEsQFkf9SDYV50rLG6X7It9aVM43Bfs
+      username: hscc_test_bot
+      token: 7697397427:AAEblENgSu7YhfxlnfVlPTlqyIwwdp-HNo4
       path: false
 
   minio:
@@ -21,27 +22,6 @@ spring:
 
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
-
-#  quartz:
-#    job-store-type: jdbc
-#    jdbc:
-#      initialize-schema: always
-#    properties:
-#      org:
-#        quartz:
-#          jobStore:
-#            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
-#  quartz:
-#    job-store-type: memory
-#    scheduler:
-#      auto-startup: true
-#      instance-name: NotificationScheduler
-#    properties:
-#      org:
-#        quartz:
-#          threadPool:
-#            threadCount: 5
-#
 #logging:
 #  level:
 #    org:
@@ -54,3 +34,39 @@ image:
   maxSizeHorizontal: 900
   maxSizeHeight: 900
   maxSizeSquare: 900
+
+#для тестирования в локальных docker контейнерах
+---
+spring:
+
+  config:
+    activate:
+      on-profile: test
+
+  datasource:
+    url: jdbc:postgresql://postgres:5432/hse_database
+
+  minio:
+    url: http://minio:9000
+
+#для итогового релиза на сервер
+---
+spring:
+
+  config:
+    activate:
+      on-profile: prod
+
+  datasource:
+    url: jdbc:postgresql://postgres:5432/hse_database
+    username: hse_user
+    password: hse_password
+
+  telegram:
+    bot:
+      username: hscc_hse_bot
+      token: 8113684980:AAFEpEsQFkf9SDYV50rLG6X7It9aVM43Bfs
+      path: false
+
+  minio:
+    url: http://minio:9000

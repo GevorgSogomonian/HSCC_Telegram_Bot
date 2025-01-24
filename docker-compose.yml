@@ -2,18 +2,20 @@ version: '3.8'
 
 services:
   app:
-    build: .
+    build:
+      context: .
+      platforms:
+        - linux/amd64
     container_name: telegram_bot_app
     ports:
       - "8080:8080"  # Настроить порт для вашего приложения
     environment:
-      SPRING_PROFILES_ACTIVE: prod
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/hse_database
-      SPRING_DATASOURCE_USERNAME: hse_user
-      SPRING_DATASOURCE_PASSWORD: hse_password
-      MINIO_URL: http://minio:9000
-      MINIO_ACCESS_KEY: minioadmin
-      MINIO_SECRET_KEY: minioadmin
+      SPRING_PROFILES_ACTIVE: test
+#      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/hse_database
+#      SPRING_MINIO_URL: http://minio:9000
+#      SPRING_MINIO_ACCESS_KEY: minioadmin
+#      SPRING_MINIO_SECRET_KEY: minioadmin
+#      SPRING_MINIO_BUCKETNAME: pictures
     depends_on:
       - postgres
       - minio
@@ -29,7 +31,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    platform: linux/arm64  # для Mac M1
+    platform: linux/amd64  # для Mac M1
 
   minio:
     image: minio/minio:latest
@@ -43,7 +45,7 @@ services:
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data
-    platform: linux/arm64
+    platform: linux/amd64
 
 volumes:
   postgres_data:
