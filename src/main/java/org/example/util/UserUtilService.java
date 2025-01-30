@@ -33,8 +33,9 @@ public class UserUtilService {
         newUser.setSubscribedEventIds("");
         newUser.setIsAdminClone(false);
 
-
+        userRepository.insertUniqueNumber();
         Long uniqueNumber = userRepository.getUniqueNumber();
+
         newUser.setUserId(getNewUserId(uniqueNumber));
 
         return newUser;

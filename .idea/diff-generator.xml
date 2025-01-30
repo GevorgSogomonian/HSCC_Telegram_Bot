@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DiffGenerationConfig" isInitGenerateDdl="true">
+    <option name="initGenerateDdl" value="true" />
+    <option name="liquibaseAuthor" value="" />
+    <option name="snapshotDbValue" value="106118e0-7262-4855-9631-95c458d7d518" />
+    <option name="snapshotDirValue" value="$PROJECT_DIR$" />
+    <option name="snapshotModelValue" value="telegramFilmBotLocal.main:telegramFilmBotLocal.main" />
+    <option name="sourceDbValue" value="106118e0-7262-4855-9631-95c458d7d518" />
+    <option name="sourceModelValue" value="telegramFilmBotLocal.main:telegramFilmBotLocal.main" />
+    <option name="targetDbValue" value="106118e0-7262-4855-9631-95c458d7d518" />
+    <option name="updateChangeLogPath" value="src/main/resources/db/db.changelog-master.yaml" />
+    <option name="updateDbConnectionName" value="106118e0-7262-4855-9631-95c458d7d518" />
+  </component>
+</project>

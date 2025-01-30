@@ -29,14 +29,12 @@ import java.util.UUID;
 public class ImageService {
 
     private final MinioClient minioClient;
-    private final ResizeService resizeService;
 
     @Value("${spring.minio.bucketName}")
     private String bucketName;
 
     public String uploadImage(MultipartFile file) throws Exception {
         String fileName = UUID.randomUUID() + "-" + file.getOriginalFilename();
-//        MultipartFile resizedImage = resizeService.resizeImage(file);
         try (InputStream inputStream = file.getInputStream()) {
             log.info(String.format("""
                     Размер файла в байтах: %s

@@ -2,7 +2,9 @@ package org.example.base_user.commands;
 
 import lombok.RequiredArgsConstructor;
 import org.example.entity.Event;
+import org.example.entity.EventNotification;
 import org.example.entity.Usr;
+import org.example.notifications.EventNotificationService;
 import org.example.repository.EventRepository;
 import org.example.repository.UserRepository;
 import org.example.telegram.api.TelegramSender;
@@ -16,6 +18,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,6 +30,7 @@ public class BaseSubscribeToEvent {
     private final TelegramSender telegramSender;
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
+    private final EventNotificationService eventNotificationService;
 
     public void processCallbackQuery(Update update) {
         CallbackQuery callbackQuery = update.getCallbackQuery();
@@ -122,42 +126,6 @@ public class BaseSubscribeToEvent {
             user.setSubscribedEventIds(updatedSubscribedEventIds);
             userRepository.save(user);
 
-
-//            Scheduler scheduler;
-//            // Создание экземпляра Scheduler
-//            try {
-//                scheduler = StdSchedulerFactory.getDefaultScheduler();
-//                scheduler.start();
-//            } catch (SchedulerException e) {
-//                throw new RuntimeException(e);
-//            }
-//
-//            // Данные для задания
-//            JobDataMap jobDataMap = new JobDataMap();
-//            jobDataMap.put(chatId.toString(), "Напоминание о мероприятии!");
-//
-//            // Время запуска уведомления (через 1 минуту от текущего времени)
-//            LocalDateTime notificationTime = LocalDateTime.now().plusMinutes(1);
-//
-//            // Создание и запуск задачи
-//            NotificationScheduler notificationScheduler = new NotificationScheduler(scheduler);
-//            try {
-//                notificationScheduler.scheduleNotification(
-//                        "EventReminderJob",
-//                        "EventGroup",
-//                        notificationTime,
-//                        EventReminderJob.class,
-//                        jobDataMap
-//                );
-//            } catch (SchedulerException e) {
-//                throw new RuntimeException(e);
-//            }
-
-
-//            LocalDateTime notificationTime = event.getStartTime().minusDays(1); // За 24 часа до мероприятия
-//            Date triggerStartTime = Date.from(notificationTime.atZone(ZoneId.systemDefault()).toInstant());
-//            notificationScheduler.scheduleNotification("jk", "sds", triggerStartTime, );
-
             telegramSender.sendText(chatId, SendMessage.builder()
                     .chatId(chatId)
                     .text(String.format("""
@@ -165,6 +133,12 @@ public class BaseSubscribeToEvent {
                     
                     За сутки до начала, мы пришлём вам напоминание.""", eventName))
                     .build());
+            EventNotification eventNotification = new EventNotification();
+            eventNotification.setNotificationText("Hello");
+            eventNotification.setNotificationTime(LocalDateTime.now().plusMinutes(1));
+            eventNotification.setEventId(eventId);
+
+            eventNotificationService.saveNotification(eventNotification);
         } else {
             telegramSender.sendText(chatId, SendMessage.builder()
                     .chatId(chatId)

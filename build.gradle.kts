@@ -10,51 +10,28 @@ java.sourceCompatibility = JavaVersion.VERSION_17
 
 repositories {
     mavenCentral()
-    maven { url = uri("https://repository.apache.org/content/repositories/releases/") }
 }
 
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-actuator")
-    testImplementation(platform("org.junit:junit-bom:5.10.0"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
     // Spring Boot
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
     // Database
-//    implementation("org.quartz-scheduler:quartz:2.3.2")
-    implementation("org.postgresql:postgresql:42.6.0")
-    implementation("org.liquibase:liquibase-core:4.23.1")
+//    implementation("org.postgresql:postgresql:42.7.2")
+    implementation("mysql:mysql-connector-java:8.0.33")
+    implementation("org.liquibase:liquibase-core")
+    implementation("io.minio:minio:8.4.3")
 
     // Telegram Bot API
-    implementation("org.telegram:telegrambots:6.5.0")
+    implementation("org.telegram:telegrambots")
     implementation("org.telegram:telegrambots-spring-boot-starter:6.5.0")
 
-    // JSON Processing
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.15.2")
-
-    // Apache Mahout (для рекомендаций)
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("com.fasterxml.jackson.core:jackson-databind")
-    implementation("org.apache.commons:commons-math3:3.6.1")
-
+    // Lombook
     implementation("org.projectlombok:lombok:1.18.26")
     annotationProcessor("org.projectlombok:lombok:1.18.26")
 
-    // Test dependencies
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-
-    implementation("org.springframework.boot:spring-boot-starter")
-    implementation("org.springframework.boot:spring-boot-configuration-processor")
-
+    // Logging
     implementation("org.slf4j:slf4j-api:2.0.9")
-    implementation("ch.qos.logback:logback-classic:1.4.11")
-
-    implementation("io.minio:minio:8.4.3")
-    implementation("net.coobird:thumbnailator:0.4.20")
-//    implementation ("org.springframework.boot:spring-boot-starter-quartz")
-}
-
-tasks.test {
-    useJUnitPlatform()
 }

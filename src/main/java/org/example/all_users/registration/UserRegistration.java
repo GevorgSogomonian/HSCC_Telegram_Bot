@@ -57,7 +57,7 @@ public class UserRegistration {
         telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
                 .chatId(chatId)
                 .text("""
-                                Введите ваше имя:""")
+                        Введите ваше имя:""")
                 .build()));
 
         stateManager.setUserState(chatId, UserState.ENTERING_FIRSTNAME);
@@ -69,7 +69,7 @@ public class UserRegistration {
 
         String formattedFirstName = stringValidator.validateAndFormatFirstName(chatId, firstName);
 
-        if (!formattedFirstName.isEmpty()) {
+        if (formattedFirstName != null) {
             Usr user = temporaryUserService.getTemporaryData(chatId);
             user.setFirstName(firstName);
             if (updateUtil.getAdmin(update).isPresent()) {
@@ -80,7 +80,7 @@ public class UserRegistration {
             telegramSender.sendText(chatId, SendMessage.builder()
                     .chatId(chatId)
                     .text("""
-                                Ваше имя сохранено!""")
+                            Ваше имя сохранено!""")
                     .build());
 
             requestLastName(chatId);
@@ -103,7 +103,7 @@ public class UserRegistration {
 
         String formattedLastName = stringValidator.validateAndFormatLastName(chatId, lastName);
 
-        if (!formattedLastName.isEmpty()) {
+        if (formattedLastName != null) {
             Usr user = temporaryUserService.getTemporaryData(chatId);
             user.setLastName(lastName);
 
@@ -114,8 +114,6 @@ public class UserRegistration {
                     .build());
 
             requestStudyPlace(chatId);
-//            saveNewUser(chatId, user);
-//            baseUserService.onUpdateRecieved(update);
         }
     }
 

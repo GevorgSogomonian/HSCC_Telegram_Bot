@@ -1,6 +1,5 @@
 package org.example.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DdlMappings">
+    <mapping uuid="94f5aefd-d832-4c0a-928c-89f11f17b72a" name="hse_database@localhost [2] Mapping">
+      <data-sources db="8eb1cad0-5936-4f4f-b71a-aad5a56a257e" />
+      <scope>
+        <node negative="1">
+          <node kind="database" qname="@" />
+          <node kind="schema" qname="hse_database" />
+        </node>
+      </scope>
+    </mapping>
+    <mapping uuid="dcff869f-23aa-4314-aa1c-6dd2349e876b" name="hse_database@localhost Mapping">
+      <data-sources db="aaaeca4b-d37b-40a0-a634-cf3dab4a7180" />
+      <scope>
+        <node negative="1">
+          <node kind="schema" qname="hse_database" />
+          <node kind="database" qname="@" />
+        </node>
+      </scope>
+    </mapping>
+  </component>
+</project>

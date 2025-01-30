@@ -11,26 +11,22 @@ services:
       - "8080:8080"  # Настроить порт для вашего приложения
     environment:
       SPRING_PROFILES_ACTIVE: test
-#      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/hse_database
-#      SPRING_MINIO_URL: http://minio:9000
-#      SPRING_MINIO_ACCESS_KEY: minioadmin
-#      SPRING_MINIO_SECRET_KEY: minioadmin
-#      SPRING_MINIO_BUCKETNAME: pictures
     depends_on:
-      - postgres
+      - mysql_hse
       - minio
 
-  postgres:
-    image: postgres:15-alpine
-    container_name: postgres
+  mysql_hse:
+    image: mysql:8
+    container_name: mysql_hse
     environment:
-      POSTGRES_USER: hse_user
-      POSTGRES_PASSWORD: hse_password
-      POSTGRES_DB: hse_database
+      MYSQL_ROOT_PASSWORD: hse_root_password  # Пароль для root
+      MYSQL_USER: hse_user                    # Пользователь
+      MYSQL_PASSWORD: hse_password            # Пароль для пользователя
+      MYSQL_DATABASE: hse_database
     ports:
-      - "5432:5432"
+      - "3308:3306"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql_data/data
     platform: linux/amd64  # для Mac M1
 
   minio:
@@ -48,7 +44,7 @@ services:
     platform: linux/amd64
 
 volumes:
-  postgres_data:
+  mysql_data:
     driver: local
   minio_data:
     driver: local

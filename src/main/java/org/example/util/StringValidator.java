@@ -1,7 +1,6 @@
 package org.example.util;
 
 import lombok.RequiredArgsConstructor;
-import org.example.repository.EventRepository;
 import org.example.telegram.api.TelegramSender;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -16,69 +15,74 @@ public class StringValidator {
 
     private final TelegramSender telegramSender;
 
-    public String validateAndFormatFirstName(Long chatId, String name) {
-        if (name == null || name.length() <= 1) {
+    public String validateAndFormatFirstName(Long chatId, String firstName) {
+        if (firstName == null || firstName.length() <= 1) {
             telegramSender.sendText(chatId, SendMessage.builder()
                     .chatId(chatId)
                     .text("""
                             Имя должно содержать более одного символа.""")
                     .build());
-        } else if (name.matches(".*\\d.*")) {
+        } else if (firstName.matches(".*\\d.*")) {
             telegramSender.sendText(chatId, SendMessage.builder()
                     .chatId(chatId)
                     .text("""
                             Имя не должно содержать цифры.""")
                     .build());
-        } else if (name.contains(" ")) {
+        } else if (firstName.contains(" ")) {
             telegramSender.sendText(chatId, SendMessage.builder()
                             .chatId(chatId)
                             .text("""
                                     Введите только имя, без пробелов.""")
                     .build());
-        } else if (!name.matches("[а-яА-Я]+")) {
+        } else if (!firstName.matches("[а-яА-Я]+")) {
             telegramSender.sendText(chatId, SendMessage.builder()
                     .chatId(chatId)
                     .text("""
                             Имя должно содержать только русские буквы.""")
                     .build());
-        } else if (!Character.isUpperCase(name.charAt(0))) {
-            name = Character.toUpperCase(name.charAt(0)) + name.substring(1);
-            return name;
+        } else if (!Character.isUpperCase(firstName.charAt(0))) {
+            firstName = Character.toUpperCase(firstName.charAt(0)) + firstName.substring(1);
+            return firstName;
         } else {
-            return name;
+            return firstName;
         }
 
         return null;
     }
 
-    public String validateAndFormatLastName(Long chatId, String name) {
-        if (name == null || name.length() <= 1) {
+    public String validateAndFormatLastName(Long chatId, String lastName) {
+        if (lastName == null || lastName.length() <= 1) {
             telegramSender.sendText(chatId, SendMessage.builder()
                     .chatId(chatId)
                     .text("""
-                                    Имя должно содержать более одного символа.""")
+                            Фамилия должна содержать более одного символа.""")
                     .build());
-            return "";
-        } else if (name.matches(".*\\d.*")) {
+        } else if (lastName.matches(".*\\d.*")) {
             telegramSender.sendText(chatId, SendMessage.builder()
                     .chatId(chatId)
                     .text("""
-                                    Имя не должно содержать цифры.""")
+                            Фамилия не должна содержать цифры.""")
                     .build());
-            return "";
-        } else if (!name.matches("[а-яА-Я]+")) {
+        } else if (lastName.contains(" ")) {
             telegramSender.sendText(chatId, SendMessage.builder()
                     .chatId(chatId)
                     .text("""
-                                    Имя должно содержать только русские буквы.""")
+                            Введите только фамилию, без пробелов.""")
                     .build());
-            return "";
-        } else if (!Character.isUpperCase(name.charAt(0))) {
-            name = Character.toUpperCase(name.charAt(0)) + name.substring(1);
-            return name;
+        } else if (!lastName.matches("[а-яА-Я]+")) {
+            telegramSender.sendText(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                            Фамилия должна содержать только русские буквы.""")
+                    .build());
+        } else if (!Character.isUpperCase(lastName.charAt(0))) {
+            lastName = Character.toUpperCase(lastName.charAt(0)) + lastName.substring(1);
+            return lastName;
         } else {
-            return name;
+            return lastName;
         }
+
+        return null;
     }
 
     public String validateEventName(Long chatId, String eventName) {
