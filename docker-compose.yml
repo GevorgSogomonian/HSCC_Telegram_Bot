@@ -23,6 +23,7 @@ services:
       MYSQL_USER: hse_user                    # Пользователь
       MYSQL_PASSWORD: hse_password            # Пароль для пользователя
       MYSQL_DATABASE: hse_database
+      TZ: "Europe/Moscow"
     ports:
       - "3308:3306"
     volumes:

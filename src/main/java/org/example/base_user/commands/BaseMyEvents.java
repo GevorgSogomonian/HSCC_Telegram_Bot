@@ -39,10 +39,6 @@ public class BaseMyEvents {
                 for (Long eventId : subscribedEventsIds) {
                     Optional<Event> eventOptional = eventRepository.findById(eventId);
                     eventOptional.ifPresent(subscribedEvents::add);
-//                    if (!eventId.) {
-//                        Optional<Event> eventOptional = eventRepository.findById(Long.parseLong(eventId));
-//                        eventOptional.ifPresent(subscribedEvents::add);
-//                    }
                 }
 
                 if (!subscribedEvents.isEmpty()) {

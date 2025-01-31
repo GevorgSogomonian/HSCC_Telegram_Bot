@@ -12,7 +12,6 @@ import org.example.repository.UserRepository;
 import org.example.telegram.api.TelegramSender;
 import org.example.util.UpdateUtil;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
@@ -24,7 +23,6 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -109,7 +107,6 @@ public class BaseSubscribeToEvent {
         }
     }
 
-//    @Transactional
     public void acceptSubscribe(Long chatId, String callbackText, Integer messageId) {
         String[] callbackTextArray = callbackText.split("_");
         Long eventId = Long.parseLong(callbackTextArray[2]);
@@ -144,15 +141,6 @@ public class BaseSubscribeToEvent {
                     
                     За сутки до начала, мы пришлём вам напоминание.""", eventName))
                     .build());
-
-            EventNotification eventNotification = new EventNotification();
-            eventNotification.setNotificationText("Hello");
-            eventNotification.setNotificationTime(LocalDateTime.now().plusMinutes(1));
-            eventNotification.setEventId(eventId);
-
-            eventNotificationService.saveNotification(eventNotification);
-
-//            System.out.println(userRepository.findByChatId(chatId).get().getSubscriptions());
         } else {
             telegramSender.sendText(chatId, SendMessage.builder()
                     .chatId(chatId)

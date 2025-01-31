@@ -3,6 +3,7 @@ package org.example.admin.commands;
 import lombok.RequiredArgsConstructor;
 import org.example.dto.ChatBotRequest;
 import org.example.entity.Event;
+import org.example.repository.EventNotificationRepository;
 import org.example.repository.EventRepository;
 import org.example.image.ImageService;
 import org.example.telegram.api.TelegramSender;
@@ -26,6 +27,7 @@ public class AdminDeleteEvent {
     private final ImageService imageService;
     private final TelegramSender telegramSender;
     private final UpdateUtil updateUtil;
+    private final EventNotificationRepository eventNotificationRepository;
 
     public void processCallbackQuery(Update update) {
         CallbackQuery callbackQuery = update.getCallbackQuery();
@@ -143,6 +145,7 @@ public class AdminDeleteEvent {
             }
 
             eventRepository.delete(event);
+            deleteNotification(eventId);
 
             telegramSender.sendText(chatId, SendMessage.builder()
                     .chatId(chatId)
@@ -166,6 +169,10 @@ public class AdminDeleteEvent {
                 .chatId(chatId)
                 .messageId(messageId)
                 .build());
+    }
+
+    private void deleteNotification(Long eventId) {
+        eventNotificationRepository.deleteNotification(eventId);
     }
 
     public void cancelDeletingEvent(Long chatId, Integer messageId) {

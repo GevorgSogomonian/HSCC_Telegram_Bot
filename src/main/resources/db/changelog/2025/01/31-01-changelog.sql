@@ -1,6 +1,6 @@
 -- liquibase formatted sql
 
--- changeset gs:1738254898461-1
+-- changeset gs:1738318022312-1
 CREATE TABLE `admin`
 (
     id            BIGINT AUTO_INCREMENT NOT NULL,
@@ -13,7 +13,7 @@ CREATE TABLE `admin`
     CONSTRAINT `PRIMARY` PRIMARY KEY (id)
 );
 
--- changeset gs:1738254898461-2
+-- changeset gs:1738318022312-2
 CREATE TABLE event
 (
     id               BIGINT AUTO_INCREMENT NOT NULL,
@@ -30,7 +30,7 @@ CREATE TABLE event
     CONSTRAINT `PRIMARY` PRIMARY KEY (id)
 );
 
--- changeset gs:1738254898461-3
+-- changeset gs:1738318022312-3
 CREATE TABLE event_notification
 (
     id                BIGINT AUTO_INCREMENT NOT NULL,
@@ -40,14 +40,23 @@ CREATE TABLE event_notification
     CONSTRAINT `PRIMARY` PRIMARY KEY (id)
 );
 
--- changeset gs:1738254898461-4
-CREATE TABLE seq
+-- changeset gs:1738318022312-4
+CREATE TABLE event_subscription
 (
-    id BIGINT AUTO_INCREMENT NOT NULL,
+    id       BIGINT AUTO_INCREMENT NOT NULL,
+    chat_id  BIGINT                NULL,
+    event_id BIGINT                NULL,
     CONSTRAINT `PRIMARY` PRIMARY KEY (id)
 );
 
--- changeset gs:1738254898461-5
+-- changeset gs:1738318022312-5
+CREATE TABLE unique_number_seq
+(
+    number BIGINT AUTO_INCREMENT NOT NULL,
+    CONSTRAINT `PRIMARY` PRIMARY KEY (number)
+);
+
+-- changeset gs:1738318022312-6
 CREATE TABLE usr
 (
     id                       BIGINT AUTO_INCREMENT NOT NULL,
@@ -68,11 +77,11 @@ CREATE TABLE usr
     CONSTRAINT `PRIMARY` PRIMARY KEY (id)
 );
 
--- changeset gs:1738254898461-6
+-- changeset gs:1738318022312-7
 ALTER TABLE usr
     ADD CONSTRAINT UK_blhwp61ksqcuubvckl0ck2942 UNIQUE (chat_id);
 
--- changeset gs:1738254898461-7
+-- changeset gs:1738318022312-8
 ALTER TABLE `admin`
     ADD CONSTRAINT UK_qn02jc8p8fyoluh1eaa2rlk73 UNIQUE (chat_id);
 

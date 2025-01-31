@@ -2,8 +2,10 @@ package org.example.admin.commands;
 
 import lombok.RequiredArgsConstructor;
 import org.example.dto.ChatBotRequest;
+import org.example.entity.EventNotification;
 import org.example.entity.UserState;
 import org.example.entity.Event;
+import org.example.repository.EventNotificationRepository;
 import org.example.repository.EventRepository;
 import org.example.util.ActionsChainUtil;
 import org.example.util.CallbackUtil;
@@ -48,6 +50,7 @@ public class AdminEditEvent {
     private final StringValidator stringValidator;
     private final CallbackUtil callbackUtil;
     private final ActionsChainUtil actionsChainUtil;
+    private final EventNotificationRepository eventNotificationRepository;
 
     public void processCallbackQuery(Update update) {
         CallbackQuery callbackQuery = update.getCallbackQuery();
@@ -627,7 +630,8 @@ public class AdminEditEvent {
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-            eventRepository.save(temporaryEditedEventService.getTemporaryData(chatId));
+            Long eventId = eventRepository.save(temporaryEditedEventService.getTemporaryData(chatId)).getId();
+            editNotificationTime(chatId, eventId);
             System.out.println("""
                     Сработал сохранение)""");
         });
@@ -640,6 +644,22 @@ public class AdminEditEvent {
                 .build());
         stateManager.setUserState(chatId, UserState.COMMAND_CHOOSING);
         adminStart.handleStartState(update);
+    }
+
+    private void editNotificationTime(Long chatId, Long eventId) {
+        Event event = temporaryEditedEventService.getTemporaryData(chatId);
+//        EventNotification eventNotification = new EventNotification();
+//        eventNotification.setNotificationText(String.format("""
+//                    Напоминаем, что *%s* состоится мероприятие *%s*!""",
+//                event.getFormattedStartDate(), event.getEventName()));
+//        eventNotification.setNotificationTime(event.getStartTime().minusHours(24));
+//        eventNotification.setEventId(event.getId());
+//
+//        eventNotificationService.saveNotification(eventNotification);
+
+        eventNotificationRepository.updateNotification(eventId, event.getStartTime().minusHours(24), String.format("""
+                    Напоминаем, что *%s* состоится мероприятие *%s*!""",
+                event.getFormattedStartDate(), event.getEventName()));
     }
 
     private void cancelSavingEditedEvent(Update update) {

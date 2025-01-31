@@ -2,7 +2,6 @@ package org.example.base_user.commands;
 
 import lombok.RequiredArgsConstructor;
 import org.example.entity.Event;
-import org.example.entity.EventSubscription;
 import org.example.entity.Usr;
 import org.example.repository.EventRepository;
 import org.example.repository.EventSubscriptionRepository;
@@ -10,7 +9,6 @@ import org.example.repository.UserRepository;
 import org.example.telegram.api.TelegramSender;
 import org.example.util.UpdateUtil;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
@@ -20,7 +18,6 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -105,7 +102,6 @@ public class BaseUnsubscribeFromEvent {
         }
     }
 
-//    @Transactional
     public void acceptUnsubscribe(Long chatId, String callbackText, Integer messageId) {
         String[] callbackTextArray = callbackText.split("_");
         Long eventId = Long.parseLong(callbackTextArray[2]);
@@ -114,14 +110,8 @@ public class BaseUnsubscribeFromEvent {
         Optional<Usr> userOptional = userRepository.findByChatId(chatId);
 
         if (eventOptional.isPresent() && userOptional.isPresent()) {
-//            Event event = eventOptional.get();
-//            Usr user = userOptional.get();
-//            String eventName = event.getEventName();
 
             List<Long> subscribedEventIds = eventSubscriptionRepository.getSubscribedEventIds(chatId);
-//            List<EventSubscription> userSubscriptions = eventSubscriptionRepository.findEventSubscriptionByChatId(chatId);
-//            String subscribedEventIds = user.getSubscribedEventIds();
-//            String updatedSubscribedEventIds;
             if (subscribedEventIds == null || subscribedEventIds.isEmpty()) {
                 telegramSender.sendText(chatId, SendMessage.builder()
                                 .chatId(chatId)
@@ -135,27 +125,12 @@ public class BaseUnsubscribeFromEvent {
                                     Вы не были подписаны на это мероприятие.""")
                         .build());
             } else {
-//                updatedSubscribedEventIds = subscribedEventIds
-//                        .replaceFirst(eventId + "_", "")
-//                        .replaceFirst("_" + eventId, "")
-//                        .replaceFirst(eventId.toString(), "");
                 eventSubscriptionRepository.removeEventSubscriptionByEventIdAndChatId(eventId, chatId);
                 telegramSender.sendText(chatId, SendMessage.builder()
                         .chatId(chatId)
                         .text(String.format("""
                                             Вы отписались от мероприятия: *%s* .""", eventOptional.get().getEventName()))
                         .build());
-
-//                if (!updatedSubscribedEventIds.equals(subscribedEventIds)) {
-//                    user.setSubscribedEventIds(updatedSubscribedEventIds);
-//                    userRepository.save(user);
-//                    eventSubscriptionRepository.removeEventSubscriptionByEventIdAndChatId(eventId, chatId);
-//                    telegramSender.sendText(chatId, SendMessage.builder()
-//                            .chatId(chatId)
-//                            .text(String.format("""
-//                                            Вы отписались от мероприятия: *%s* .""", eventOptional.get().getEventName()))
-//                            .build());
-//                }
             }
         } else {
             telegramSender.sendText(chatId, SendMessage.builder()
