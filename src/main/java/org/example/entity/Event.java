@@ -16,8 +16,10 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 import java.time.Duration;
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 @Data
 @Entity
@@ -53,6 +55,9 @@ public class Event {
 
     @Column(name = "image_url")
     private String imageUrl;
+
+//    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
+//    private Set<EventSubscription> subscriptions = new HashSet<>();
 
     @Override
     public String toString() {

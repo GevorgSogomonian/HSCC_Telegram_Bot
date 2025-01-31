@@ -12,16 +12,16 @@ public interface UserRepository extends JpaRepository<Usr, Long> {
     Optional<Usr> findByChatId(Long chatId); // Поиск пользователя по идентификатору чата
 
     @Query(nativeQuery = true, value = """
-            select seq.id
-            from seq
-            order by id desc
+            select u.number
+            from unique_number_seq u
+            order by number desc
             limit 1;
             """)
     Long getUniqueNumber();
 
     @Modifying
     @Query(nativeQuery = true, value = """
-            insert into seq () VALUES ();
+            insert into unique_number_seq () VALUES ();
             """)
     void insertUniqueNumber();
 
@@ -29,5 +29,5 @@ public interface UserRepository extends JpaRepository<Usr, Long> {
     List<Long> getAllUsersChatId();
 
     @Query("SELECT u.subscribedEventIds FROM Usr u")
-    List<String> getAllsubscribedEventIds();
+    List<String> getAllSubscribedEventIds();
 }

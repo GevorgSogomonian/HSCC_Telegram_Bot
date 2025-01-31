@@ -33,9 +33,7 @@ public class UserUtilService {
         newUser.setSubscribedEventIds("");
         newUser.setIsAdminClone(false);
 
-        userRepository.insertUniqueNumber();
-        Long uniqueNumber = userRepository.getUniqueNumber();
-
+        Long uniqueNumber = nextUniqueNumber();
         newUser.setUserId(getNewUserId(uniqueNumber));
 
         return newUser;
@@ -59,5 +57,10 @@ public class UserUtilService {
     private Long getNewUserId(Long uniqueNumber) {
         Long bigNumber = 342_665L;
         return Long.parseLong(String.format("%s%s", bigNumber / uniqueNumber, bigNumber % uniqueNumber));
+    }
+
+    private Long nextUniqueNumber() {
+        userRepository.insertUniqueNumber();
+        return userRepository.getUniqueNumber();
     }
 }

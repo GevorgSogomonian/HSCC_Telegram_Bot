@@ -3,13 +3,16 @@ package org.example.base_user.commands;
 import lombok.RequiredArgsConstructor;
 import org.example.entity.Event;
 import org.example.entity.EventNotification;
+import org.example.entity.EventSubscription;
 import org.example.entity.Usr;
 import org.example.notifications.EventNotificationService;
 import org.example.repository.EventRepository;
+import org.example.repository.EventSubscriptionRepository;
 import org.example.repository.UserRepository;
 import org.example.telegram.api.TelegramSender;
 import org.example.util.UpdateUtil;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
@@ -21,6 +24,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +35,7 @@ public class BaseSubscribeToEvent {
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
     private final EventNotificationService eventNotificationService;
+    private final EventSubscriptionRepository eventSubscriptionRepository;
 
     public void processCallbackQuery(Update update) {
         CallbackQuery callbackQuery = update.getCallbackQuery();
@@ -104,6 +109,7 @@ public class BaseSubscribeToEvent {
         }
     }
 
+//    @Transactional
     public void acceptSubscribe(Long chatId, String callbackText, Integer messageId) {
         String[] callbackTextArray = callbackText.split("_");
         Long eventId = Long.parseLong(callbackTextArray[2]);
@@ -124,6 +130,11 @@ public class BaseSubscribeToEvent {
                 updatedSubscribedEventIds = subscribedEventIds + "_" + eventId;
             }
             user.setSubscribedEventIds(updatedSubscribedEventIds);
+
+            EventSubscription eventSubscription = new EventSubscription();
+            eventSubscription.setChatId(chatId);
+            eventSubscription.setEventId(eventId);
+            eventSubscriptionRepository.save(eventSubscription);
             userRepository.save(user);
 
             telegramSender.sendText(chatId, SendMessage.builder()
@@ -133,12 +144,15 @@ public class BaseSubscribeToEvent {
                     
                     За сутки до начала, мы пришлём вам напоминание.""", eventName))
                     .build());
+
             EventNotification eventNotification = new EventNotification();
             eventNotification.setNotificationText("Hello");
             eventNotification.setNotificationTime(LocalDateTime.now().plusMinutes(1));
             eventNotification.setEventId(eventId);
 
             eventNotificationService.saveNotification(eventNotification);
+
+//            System.out.println(userRepository.findByChatId(chatId).get().getSubscriptions());
         } else {
             telegramSender.sendText(chatId, SendMessage.builder()
                     .chatId(chatId)

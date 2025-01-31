@@ -1,11 +1,16 @@
 package org.example.entity;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import lombok.Data;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Data
@@ -31,4 +36,7 @@ public class Usr {
     private String subscribedEventIds;
     private Boolean isAdminClone;
     private Boolean isHSEStudent;
+
+//    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+//    private Set<EventSubscription> subscriptions = new HashSet<>();
 }

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.entity.Event;
 import org.example.entity.Usr;
 import org.example.repository.EventRepository;
+import org.example.repository.EventSubscriptionRepository;
 import org.example.telegram.api.TelegramSender;
 import org.example.util.UpdateUtil;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ public class BaseMyEvents {
     private final UpdateUtil updateUtil;
     private final EventRepository eventRepository;
     private final TelegramSender telegramSender;
+    private final EventSubscriptionRepository eventSubscriptionRepository;
 
     public void handleMyEventsCommand(Update update) {
         System.out.println("мои мероприятия старт");
@@ -30,16 +32,17 @@ public class BaseMyEvents {
         Optional<Usr> userOptional = updateUtil.getUser(update);
 
         if (userOptional.isPresent()) {
-            Usr user = userOptional.get();
-            String userSubscribedEventIds = user.getSubscribedEventIds();
+            List<Long> subscribedEventsIds = eventSubscriptionRepository.getSubscribedEventIds(chatId);
 
-            if (!userSubscribedEventIds.isBlank()) {
+            if (!subscribedEventsIds.isEmpty()) {
                 List<Event> subscribedEvents = new ArrayList<>();
-                for (String eventId : userSubscribedEventIds.split("_")) {
-                    if (!eventId.isBlank()) {
-                        Optional<Event> eventOptional = eventRepository.findById(Long.parseLong(eventId));
-                        eventOptional.ifPresent(subscribedEvents::add);
-                    }
+                for (Long eventId : subscribedEventsIds) {
+                    Optional<Event> eventOptional = eventRepository.findById(eventId);
+                    eventOptional.ifPresent(subscribedEvents::add);
+//                    if (!eventId.) {
+//                        Optional<Event> eventOptional = eventRepository.findById(Long.parseLong(eventId));
+//                        eventOptional.ifPresent(subscribedEvents::add);
+//                    }
                 }
 
                 if (!subscribedEvents.isEmpty()) {
