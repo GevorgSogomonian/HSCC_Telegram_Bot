@@ -10,7 +10,7 @@ services:
     ports:
       - "8080:8080"  # Настроить порт для вашего приложения
     environment:
-      SPRING_PROFILES_ACTIVE: test
+      SPRING_PROFILES_ACTIVE: prod
     depends_on:
       - mysql_hse
       - minio

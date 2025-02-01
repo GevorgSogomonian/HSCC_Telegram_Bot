@@ -1,20 +1,18 @@
 package org.example.all_users.registration;
 
 import lombok.RequiredArgsConstructor;
-import org.example.base_user.BaseUserService;
-import org.example.dto.ChatBotResponse;
-import org.example.entity.Role;
-import org.example.entity.UserState;
-import org.example.entity.Usr;
-import org.example.repository.AdminRepository;
+import org.example.all_users.base_user.BaseUserService;
+import org.example.data_classes.dto.ChatBotResponse;
+import org.example.data_classes.enums.UserState;
+import org.example.data_classes.data_base.entity.Usr;
 import org.example.repository.UserRepository;
-import org.example.state_manager.StateManager;
-import org.example.util.TemporaryDataService;
+import org.example.util.state.StateManager;
+import org.example.util.state.TemporaryDataService;
 import org.example.util.UserUtilService;
-import org.example.telegram.api.TelegramApiQueue;
-import org.example.telegram.api.TelegramSender;
-import org.example.util.StringValidator;
-import org.example.util.UpdateUtil;
+import org.example.util.telegram.api.TelegramApiQueue;
+import org.example.util.telegram.api.TelegramSender;
+import org.example.util.validation.StringValidator;
+import org.example.util.telegram.helpers.UpdateUtil;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -47,7 +45,8 @@ public class UserRegistration {
                                 Иначе вы не сможете получать бонусы за посещения наших мероприятий.""")
                 .build()));
 
-        Usr newUser = userUtilService.getNewUser(update, Role.USER);
+        Usr newUser = userUtilService.getNewUser(update);
+
         temporaryUserService.putTemporaryData(chatId, newUser);
 
         requestFirstName(chatId);
@@ -143,12 +142,10 @@ public class UserRegistration {
     public void studyPlaceCheck(Update update) {
         Long chatId = updateUtil.getChatId(update);
         String userMessage = update.getMessage().getText().toLowerCase();
-//        Event editedEvent = temporaryEditedEventService.getTemporaryData(chatId);
         Usr user = temporaryUserService.getTemporaryData(chatId);
 
         if (userMessage.equals("да")) {
             user.setIsHSEStudent(true);
-//            requestNewEventLocation(chatId, editedEvent);
         } else if (userMessage.equals("нет")) {
             user.setIsHSEStudent(false);
         } else {
@@ -167,25 +164,6 @@ public class UserRegistration {
 
         saveNewUser(chatId, user);
         baseUserService.onUpdateRecieved(update);
-
-//        String lastName = update.getMessage().getText();
-//        Long chatId = updateUtil.getChatId(update);
-//
-//        String formattedLastName = stringValidator.validateAndFormatLastName(chatId, lastName);
-//
-//        if (!formattedLastName.isEmpty()) {
-//            Usr user = temporaryUserService.getTemporaryData(chatId);
-//            user.setLastName(lastName);
-//
-//            telegramSender.sendText(chatId, SendMessage.builder()
-//                    .chatId(chatId)
-//                    .text("""
-//                                Ваша фамилия сохранена!""")
-//                    .build());
-//
-//            saveNewUser(chatId, user);
-//            baseUserService.onUpdateRecieved(update);
-//        }
     }
 
     private void saveNewUser(Long chatId, Usr user) {

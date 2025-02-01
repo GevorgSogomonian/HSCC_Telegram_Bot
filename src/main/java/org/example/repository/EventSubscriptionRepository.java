@@ -1,6 +1,6 @@
 package org.example.repository;
 
-import org.example.entity.EventSubscription;
+import org.example.data_classes.data_base.comparison_tables.EventSubscription;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -12,6 +12,8 @@ import java.util.List;
 @Repository
 public interface EventSubscriptionRepository extends JpaRepository<EventSubscription, Long> {
 
+    boolean searchByChatId(Long chatId);
+    
     @Query(nativeQuery = true, value = """
             select event_subscription.event_id
             from event_subscription
@@ -41,4 +43,6 @@ public interface EventSubscriptionRepository extends JpaRepository<EventSubscrip
     @Query(nativeQuery = true, value = """
             delete from event_subscription where event_id = ?1 and chat_id = ?2""")
     void removeEventSubscriptionByEventIdAndChatId(Long eventId, Long chatId);
+    
+    boolean existsByChatIdAndEventId(Long chatId, Long eventId);
 }

@@ -1,10 +1,10 @@
 package org.example.notifications;
 
 import lombok.RequiredArgsConstructor;
-import org.example.entity.EventNotification;
+import org.example.data_classes.data_base.entity.EventNotification;
 import org.example.repository.EventNotificationRepository;
 import org.example.repository.EventSubscriptionRepository;
-import org.example.telegram.api.TelegramSender;
+import org.example.util.telegram.api.TelegramSender;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;

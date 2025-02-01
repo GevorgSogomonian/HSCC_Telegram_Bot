@@ -1,6 +1,6 @@
 package org.example.repository;
 
-import org.example.entity.Event;
+import org.example.data_classes.data_base.entity.Event;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.jpa.repository.JpaRepository;
 

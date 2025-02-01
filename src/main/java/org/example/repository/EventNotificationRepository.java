@@ -1,6 +1,6 @@
 package org.example.repository;
 
-import org.example.entity.EventNotification;
+import org.example.data_classes.data_base.entity.EventNotification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

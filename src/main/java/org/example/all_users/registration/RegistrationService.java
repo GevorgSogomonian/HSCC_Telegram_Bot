@@ -1,11 +1,11 @@
 package org.example.all_users.registration;
 
 import lombok.RequiredArgsConstructor;
-import org.example.dto.ChatBotResponse;
-import org.example.entity.UserState;
-import org.example.state_manager.StateManager;
-import org.example.telegram.api.TelegramApiQueue;
-import org.example.util.UpdateUtil;
+import org.example.data_classes.dto.ChatBotResponse;
+import org.example.data_classes.enums.UserState;
+import org.example.util.state.StateManager;
+import org.example.util.telegram.api.TelegramApiQueue;
+import org.example.util.telegram.helpers.UpdateUtil;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
