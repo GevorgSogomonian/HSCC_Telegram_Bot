@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.data_classes.data_base.entity.Event;
 import org.example.repository.EventRepository;
-import org.example.repository.EventSubscriptionRepository;
 import org.example.repository.EventVisitRepository;
 import org.example.util.telegram.api.TelegramSender;
 import org.example.util.telegram.helpers.UpdateUtil;
@@ -43,20 +42,13 @@ public class AdminArchivedEvents {
             SendPhoto sendPhoto = new SendPhoto();
             sendPhoto.setChatId(chatId.toString());
             Long visitorsCount = eventVisitRepository.getVisitorsCount(event.getId());
-//            Long subscribersCount = eventSubscriptionRepository.getSubscribersCountByEventId(event.getId());
 
             sendPhoto.setCaption(String.format("""
                     %s
                     Пришедших: *%s*""", event, visitorsCount));
 
-//            InlineKeyboardButton editButton = new InlineKeyboardButton("редактировать");
-//            editButton.setCallbackData("edit_offer-editing-event_" + event.getId());
-
             InlineKeyboardButton deleteButton = new InlineKeyboardButton("удалить");
             deleteButton.setCallbackData("delete_offer-deleting-event_" + event.getId());
-
-//            InlineKeyboardButton registrateButton = new InlineKeyboardButton("отметить пришедших");
-//            registrateButton.setCallbackData("visits_start-marking_" + event.getId());
 
             InlineKeyboardButton messageButton = new InlineKeyboardButton("сообщение пришедшим");
             messageButton.setCallbackData("message-to-visitors_to-event-visitors_" + event.getId());
@@ -64,7 +56,6 @@ public class AdminArchivedEvents {
             InlineKeyboardMarkup inlineKeyboardMarkup = InlineKeyboardMarkup.builder()
                     .clearKeyboard()
                     .keyboardRow(List.of(deleteButton))
-//                    .keyboardRow(List.of(registrateButton))
                     .keyboardRow(List.of(messageButton))
                     .build();
 

@@ -22,15 +22,6 @@ public class EventDestructorService {
         if (!eventDestructorList.isEmpty()) {
             eventDestructorList.forEach(eventDestructor -> {
                 eventSubscriptionRepository.removeEventSubscriptionByEventId(eventDestructor.getEventId());
-//                List<Long> subscriberChatIds = eventSubscriptionRepository.getSubscribersChatIds(eventDestructor.getEventId());
-//                if (!subscriberChatIds.isEmpty()) {
-//                    subscriberChatIds.forEach(chatId ->
-//                            telegramSender.sendText(chatId, SendMessage.builder()
-//                                    .chatId(chatId)
-//                                    .text(eventDestructor.getNotificationText())
-//                                    .build()));
-//                    eventNotificationRepository.delete(eventDestructor);
-//                }
             });
         }
     }
