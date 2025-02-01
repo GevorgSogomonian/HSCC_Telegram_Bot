@@ -1,11 +1,13 @@
 package org.example.all_users.admin.commands;
 
 import lombok.RequiredArgsConstructor;
+import org.example.data_classes.data_base.entity.EventDestructor;
 import org.example.data_classes.dto.ChatBotRequest;
 import org.example.data_classes.data_base.entity.EventNotification;
 import org.example.data_classes.enums.UserState;
 import org.example.data_classes.data_base.entity.Event;
-import org.example.notifications.EventNotificationService;
+import org.example.repository.EventDestructorRepository;
+import org.example.util.schedulers.notifications.EventNotificationService;
 import org.example.repository.EventRepository;
 import org.example.util.state.StateManager;
 import org.example.util.telegram.api.TelegramApiQueue;
@@ -44,6 +46,7 @@ public class AdminNewEvent {
     private final TemporaryDataService<Event> temporaryEventService;
     private final ActionsChainUtil actionsChainUtil;
     private final EventNotificationService eventNotificationService;
+    private final EventDestructorRepository eventDestructorRepository;
 
     public void processCallbackQuery(Update update) {
         CallbackQuery callbackQuery = update.getCallbackQuery();
@@ -403,6 +406,7 @@ public class AdminNewEvent {
             }
             Long eventId = eventRepository.save(temporaryEventService.getTemporaryData(chatId)).getId();
             saveNotification(chatId, eventId);
+            saveDestructionMessage(chatId, eventId);
             System.out.println("""
                     Сработал сохранение)""");
         });
@@ -428,6 +432,15 @@ public class AdminNewEvent {
         eventNotification.setEventId(eventId);
 
         eventNotificationService.saveNotification(eventNotification);
+    }
+
+    private void saveDestructionMessage(Long chatId, Long eventId) {
+        Event event = temporaryEventService.getTemporaryData(chatId);
+        EventDestructor eventDestructor = new EventDestructor();
+        eventDestructor.setDestructionTime(event.getStartTime().plusHours(24));
+        eventDestructor.setEventId(eventId);
+
+        eventDestructorRepository.save(eventDestructor);
     }
 
     private void cancelSavingNewEvent(Update update) {

@@ -4,9 +4,11 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.all_users.admin.commands.AdminAllEvent;
+import org.example.all_users.admin.commands.AdminArchivedEvents;
 import org.example.all_users.admin.commands.AdminDeleteEvent;
 import org.example.all_users.admin.commands.AdminEditEvent;
 import org.example.all_users.admin.commands.AdminMessageToSubscribers;
+import org.example.all_users.admin.commands.AdminMessageToVisitors;
 import org.example.all_users.admin.commands.AdminNewEvent;
 import org.example.all_users.admin.commands.AdminRegistrateUsers;
 import org.example.all_users.admin.commands.AdminStart;
@@ -42,6 +44,8 @@ public class AdminUserService {
     private final AdminMessageToAll adminMessageToAll;
     private final AdminMessageToSubscribers adminMessageToSubscribers;
     private final AdminRegistrateUsers adminRegistrateUsers;
+    private final AdminArchivedEvents adminArchivedEvents;
+    private final AdminMessageToVisitors adminMessageToVisitors;
 
     public void onUpdateRecieved(Update update) {
         if (update.hasCallbackQuery()) {
@@ -88,6 +92,9 @@ public class AdminUserService {
             //Forward messages to event subscribers
             case ACCEPTING_FORWARD_MESSAGE_TO_EVENT_SUBSCRIBERS -> adminMessageToSubscribers.acceptingForwardMessageToEventSubscribers(update);
 
+            //Forward messages to event visitors
+            case ACCEPTING_FORWARD_MESSAGE_TO_EVENT_VISITORS -> adminMessageToVisitors.acceptingForwardMessageToEventVisitors(update);
+
             //Mark new visitor
             case ENTERING_VISITOR_ID -> adminRegistrateUsers.checkVisitorID(update);
             case ACCEPTING_MARKING_VISITORS -> adminRegistrateUsers.checkAnswer(update);
@@ -102,6 +109,7 @@ public class AdminUserService {
         commandHandlers.put("Все мероприятия", adminAllEvent::handleAllEventsCommand);
         commandHandlers.put("Новое мероприятие", adminNewEvent::handleNewEventCommand);
         commandHandlers.put("Сообщение всем", adminMessageToAll::handleMessageToAllCommand);
+        commandHandlers.put("Архив", adminArchivedEvents::handleArchivedEventsCommand);
         commandHandlers.put("Режим пользователя", baseUserMode::handleBaseUserMode);
     }
 
@@ -121,6 +129,7 @@ public class AdminUserService {
             case "new" -> adminNewEvent.processCallbackQuery(update);
             case "message-to-all" -> adminMessageToAll.processCallbackQuery(update);
             case "message-to-subscribers" -> adminMessageToSubscribers.processCallbackQuery(update);
+            case "message-to-visitors" -> adminMessageToVisitors.processCallbackQuery(update);
             case "visits" -> adminRegistrateUsers.processCallbackQuery(update);
             default -> sendUnknownCallbackResponse(chatId);
         }

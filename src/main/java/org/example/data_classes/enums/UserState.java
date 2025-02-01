@@ -43,6 +43,8 @@ public enum UserState {
     ACCEPTING_FORWARD_MESSAGE_TO_ALL,
     //forward message to event subscribers
     ACCEPTING_FORWARD_MESSAGE_TO_EVENT_SUBSCRIBERS,
+    //forward message to event visitors
+    ACCEPTING_FORWARD_MESSAGE_TO_EVENT_VISITORS,
     //marking visitors
     ENTERING_VISITOR_ID,
     ACCEPTING_MARKING_VISITORS

@@ -3,9 +3,12 @@ package org.example.all_users.base_user.commands;
 import lombok.RequiredArgsConstructor;
 import org.example.data_classes.data_base.entity.Event;
 import org.example.data_classes.data_base.entity.Usr;
+import org.example.data_classes.enums.UserState;
 import org.example.repository.EventRepository;
 import org.example.repository.EventSubscriptionRepository;
+import org.example.repository.MySQLInfo;
 import org.example.repository.UserRepository;
+import org.example.util.state.StateManager;
 import org.example.util.telegram.api.TelegramSender;
 import org.example.util.telegram.helpers.UpdateUtil;
 import org.springframework.stereotype.Service;
@@ -29,6 +32,8 @@ public class BaseUnsubscribeFromEvent {
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
     private final EventSubscriptionRepository eventSubscriptionRepository;
+    private final MySQLInfo mySQLInfo;
+    private final StateManager stateManager;
 
     public void processCallbackQuery(Update update) {
         CallbackQuery callbackQuery = update.getCallbackQuery();
@@ -66,6 +71,17 @@ public class BaseUnsubscribeFromEvent {
         Optional<Event> eventOptional = eventRepository.findById(eventId);
 
         if (eventOptional.isPresent()) {
+            Event event = eventOptional.get();
+            if (mySQLInfo.getCurrentTimeStamp().isAfter(event.getStartTime())) {
+                telegramSender.sendText(chatId, SendMessage.builder()
+                        .chatId(chatId)
+                        .text("""
+                            Регистрация на мероприятие закрыта.""")
+                        .build());
+
+                stateManager.setUserState(chatId, UserState.COMMAND_CHOOSING);
+                return;
+            }
             String eventName = eventOptional.get().getEventName();
             InlineKeyboardButton yesButton = InlineKeyboardButton.builder()
                     .text("Да")

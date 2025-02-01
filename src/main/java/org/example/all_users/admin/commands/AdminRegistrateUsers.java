@@ -3,13 +3,13 @@ package org.example.all_users.admin.commands;
 import lombok.RequiredArgsConstructor;
 import org.example.data_classes.data_base.comparison_tables.EventVisit;
 import org.example.data_classes.data_base.entity.Event;
+import org.example.data_classes.data_base.entity.EventDestructor;
 import org.example.data_classes.data_base.entity.Usr;
 import org.example.data_classes.enums.UserState;
 import org.example.repository.EventSubscriptionRepository;
 import org.example.repository.EventVisitRepository;
+import org.example.repository.MySQLInfo;
 import org.example.repository.UserRepository;
-import org.example.util.image.ImageService;
-import org.example.repository.EventNotificationRepository;
 import org.example.repository.EventRepository;
 import org.example.util.state.StateManager;
 import org.example.util.telegram.api.TelegramSender;
@@ -22,9 +22,9 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -33,10 +33,8 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class AdminRegistrateUsers {
     private final EventRepository eventRepository;
-    private final ImageService imageService;
     private final TelegramSender telegramSender;
     private final UpdateUtil updateUtil;
-    private final EventNotificationRepository eventNotificationRepository;
     private final StateManager stateManager;
     private final StringValidator stringValidator;
     private final UserRepository userRepository;
@@ -46,6 +44,7 @@ public class AdminRegistrateUsers {
     private final EventVisitRepository eventVisitRepository;
     private final EventSubscriptionRepository eventSubscriptionRepository;
     private final ActionsChainUtil actionsChainUtil;
+    private final MySQLInfo mySQLInfo;
 
     public void processCallbackQuery(Update update) {
         CallbackQuery callbackQuery = update.getCallbackQuery();
@@ -56,8 +55,6 @@ public class AdminRegistrateUsers {
 
         switch (callbackTextArray[1]) {
             case "start-marking" -> handleMarkingVisitors(chatId, callbackData, messageId);
-//            case "accept-deleting-event" -> acceptDeletingEvent(chatId, callbackData, messageId);
-//            case "cancel-deleting-event" -> cancelDeletingEvent(chatId, messageId);
             default -> sendUnknownCallbackResponse(chatId);
         }
 
@@ -83,6 +80,17 @@ public class AdminRegistrateUsers {
         Optional<Event> eventOptional = eventRepository.findById(eventId);
 
         if (eventOptional.isPresent()) {
+            Event event = eventOptional.get();
+            if (mySQLInfo.getCurrentTimeStamp().isBefore(event.getStartTime().minusHours(24))) {
+                telegramSender.sendText(chatId, SendMessage.builder()
+                        .chatId(chatId)
+                        .text("""
+                            Регистрация начнётся за сутки до начала мероприятия.""")
+                        .build());
+                stateManager.setUserState(chatId, UserState.COMMAND_CHOOSING);
+                return;
+            }
+
             ReplyKeyboardRemove replyKeyboardRemove = ReplyKeyboardRemove.builder()
                     .removeKeyboard(true)
                     .build();
@@ -105,6 +113,8 @@ public class AdminRegistrateUsers {
                     .chatId(chatId)
                     .messageId(messageId)
                     .build());
+
+            stateManager.setUserState(chatId, UserState.COMMAND_CHOOSING);
         }
     }
 
@@ -116,51 +126,23 @@ public class AdminRegistrateUsers {
             Optional<Usr> visitorOptional = userRepository.findByUserId(visitorID);
             if (visitorOptional.isPresent()) {
                 Long eventId = adminCurrentEvent.get(chatId);
-                if (eventId == null || !eventRepository.existsById(eventId)) {
-                    telegramSender.sendText(chatId, SendMessage.builder()
-                            .chatId(chatId)
-                            .text("""
-                                        Ошибка, попробуйте ещё раз.""")
-                            .build());
-                    adminStart.handleStartState(update);
-                    return;
-                }
-
                 Usr visitor = visitorOptional.get();
-                if (eventVisitRepository.existsByChatIdAndEventId(visitor.getChatId(), eventId)) {
-                    telegramSender.sendText(chatId, SendMessage.builder()
-                            .chatId(chatId)
-                            .text(String.format("""
-                                Пользователя с ID *%s* уже отмечен.""", visitorID))
-                            .build());
-                    offerEnterNextVisitorID(chatId);
-                    return;
-                    //отметить ещё кого-то?
-                }
 
-                if (!eventSubscriptionRepository.existsByChatIdAndEventId(visitor.getChatId(), eventId)) {
+                if (validateVisitor(chatId, visitor.getChatId(), visitorID, eventId, update)) {
+                    EventVisit eventVisit = new EventVisit();
+                    eventVisit.setChatId(visitor.getChatId());
+                    eventVisit.setEventId(eventId);
+                    visitor.setNumberOfVisitedEvents(visitor.getNumberOfVisitedEvents() + 1);
+                    eventVisitRepository.save(eventVisit);
+                    userRepository.save(visitor);
                     telegramSender.sendText(chatId, SendMessage.builder()
                             .chatId(chatId)
                             .text(String.format("""
-                                Пользователя с ID *%s* не подписан на данное мероприятие(""", visitorID))
-                            .build());
-                    offerEnterNextVisitorID(chatId);
-                    return;
-                    //отметить ещё кого-то?
-                }
-                EventVisit eventVisit = new EventVisit();
-                eventVisit.setChatId(visitor.getChatId());
-                eventVisit.setEventId(eventId);
-                visitor.setNumberOfVisitedEvents(visitor.getNumberOfVisitedEvents() + 1);
-                eventVisitRepository.save(eventVisit);
-                userRepository.save(visitor);
-                telegramSender.sendText(chatId, SendMessage.builder()
-                        .chatId(chatId)
-                        .text(String.format("""
                                 Отметили пользователя с ID *%s*.""", visitorID))
-                        .build());
+                            .build());
 
-                offerEnterNextVisitorID(chatId);
+                    offerEnterNextVisitorID(chatId);
+                }
             } else {
                 telegramSender.sendText(chatId, SendMessage.builder()
                         .chatId(chatId)
@@ -170,6 +152,40 @@ public class AdminRegistrateUsers {
                 offerEnterNextVisitorID(chatId);
             }
         }
+    }
+
+    private boolean validateVisitor(Long chatId, Long visitorChatId, Long visitorID, Long eventId, Update update) {
+        if (eventId == null || !eventRepository.existsById(eventId)) {
+            telegramSender.sendText(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                                        Ошибка, попробуйте ещё раз.""")
+                    .build());
+            adminStart.handleStartState(update);
+            return false;
+        }
+
+        if (eventVisitRepository.existsByChatIdAndEventId(visitorChatId, eventId)) {
+            telegramSender.sendText(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text(String.format("""
+                                Пользователя с ID *%s* уже отмечен.""", visitorID))
+                    .build());
+            offerEnterNextVisitorID(chatId);
+            return false;
+        }
+
+        if (!eventSubscriptionRepository.existsByChatIdAndEventId(visitorChatId, eventId)) {
+            telegramSender.sendText(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text(String.format("""
+                                Пользователя с ID *%s* не подписан на данное мероприятие(""", visitorID))
+                    .build());
+            offerEnterNextVisitorID(chatId);
+            return false;
+        }
+
+        return true;
     }
 
     private void offerEnterNextVisitorID(Long chatId) {

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.data_classes.dto.ChatBotRequest;
 import org.example.data_classes.enums.UserState;
 import org.example.data_classes.data_base.entity.Event;
+import org.example.repository.EventDestructorRepository;
 import org.example.repository.EventNotificationRepository;
 import org.example.repository.EventRepository;
 import org.example.util.telegram.helpers.ActionsChainUtil;
@@ -50,6 +51,7 @@ public class AdminEditEvent {
     private final CallbackUtil callbackUtil;
     private final ActionsChainUtil actionsChainUtil;
     private final EventNotificationRepository eventNotificationRepository;
+    private final EventDestructorRepository eventDestructorRepository;
 
     public void processCallbackQuery(Update update) {
         CallbackQuery callbackQuery = update.getCallbackQuery();
@@ -631,6 +633,7 @@ public class AdminEditEvent {
             }
             Long eventId = eventRepository.save(temporaryEditedEventService.getTemporaryData(chatId)).getId();
             editNotificationTime(chatId, eventId);
+            editDestructionTime(chatId, eventId);
             System.out.println("""
                     Сработал сохранение)""");
         });
@@ -651,6 +654,12 @@ public class AdminEditEvent {
         eventNotificationRepository.updateNotification(eventId, event.getStartTime().minusHours(24), String.format("""
                     Напоминаем, что *%s* состоится мероприятие *%s*!""",
                 event.getFormattedStartDate(), event.getEventName()));
+    }
+
+    private void editDestructionTime(Long chatId, Long eventId) {
+        Event event = temporaryEditedEventService.getTemporaryData(chatId);
+
+        eventDestructorRepository.updateTime(eventId, event.getStartTime().plusHours(24));
     }
 
     private void cancelSavingEditedEvent(Update update) {

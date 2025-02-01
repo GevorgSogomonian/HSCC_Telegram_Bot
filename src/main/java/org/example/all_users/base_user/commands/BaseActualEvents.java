@@ -28,7 +28,7 @@ public class BaseActualEvents {
 
     public void handleActualEventsCommand(Update update) {
         Long chatId = updateUtil.getChatId(update);
-        List<Event> allEvents = eventRepository.findAll();
+        List<Event> allEvents = eventRepository.getActualEvents();
         Optional<Usr> userOptional = updateUtil.getUser(update);
         List<Long> subscribedEventIds = eventSubscriptionRepository.getSubscribedEventIds(chatId);
 

@@ -43,6 +43,12 @@ public interface EventSubscriptionRepository extends JpaRepository<EventSubscrip
     @Query(nativeQuery = true, value = """
             delete from event_subscription where event_id = ?1 and chat_id = ?2""")
     void removeEventSubscriptionByEventIdAndChatId(Long eventId, Long chatId);
+
+    @Modifying
+    @Transactional
+    @Query(nativeQuery = true, value = """
+            delete from event_subscription where event_id = ?1""")
+    void removeEventSubscriptionByEventId(Long eventId);
     
     boolean existsByChatIdAndEventId(Long chatId, Long eventId);
 }

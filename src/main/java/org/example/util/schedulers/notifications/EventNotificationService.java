@@ -1,4 +1,4 @@
-package org.example.notifications;
+package org.example.util.schedulers.notifications;
 
 import lombok.RequiredArgsConstructor;
 import org.example.data_classes.data_base.entity.EventNotification;
@@ -23,7 +23,7 @@ public class EventNotificationService {
     }
 
     @Scheduled(fixedRate = 30_000)
-    public void eventChecker() {
+    public void eventNotificationChecker() {
         List<EventNotification> eventNotificationList = eventNotificationRepository.getActualNotifications();
         if (!eventNotificationList.isEmpty()) {
             eventNotificationList.forEach(eventNotification -> {

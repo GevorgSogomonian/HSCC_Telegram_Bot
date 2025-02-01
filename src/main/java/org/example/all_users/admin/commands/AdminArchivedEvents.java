@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.data_classes.data_base.entity.Event;
 import org.example.repository.EventRepository;
 import org.example.repository.EventSubscriptionRepository;
+import org.example.repository.EventVisitRepository;
 import org.example.util.telegram.api.TelegramSender;
 import org.example.util.telegram.helpers.UpdateUtil;
 import org.springframework.stereotype.Component;
@@ -16,24 +17,24 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 
 import java.util.List;
 
-@Component
 @Slf4j
+@Component
 @RequiredArgsConstructor
-public class AdminAllEvent {
+public class AdminArchivedEvents {
     private final UpdateUtil updateUtil;
     private final EventRepository eventRepository;
     private final TelegramSender telegramSender;
-    private final EventSubscriptionRepository eventSubscriptionRepository;
+    private final EventVisitRepository eventVisitRepository;
 
-    public void handleAllEventsCommand(Update update) {
+    public void handleArchivedEventsCommand(Update update) {
         Long chatId = updateUtil.getChatId(update);
-        List<Event> allEvents = eventRepository.getActualEvents();
+        List<Event> allEvents = eventRepository.getArchivedEvents();
 
         if (allEvents.isEmpty()) {
             telegramSender.sendText(chatId, SendMessage.builder()
                     .chatId(chatId)
                     .text("""
-                            Мероприятий нет.""")
+                            В архиве мероприятий нет.""")
                     .build());
             return;
         }
@@ -41,28 +42,29 @@ public class AdminAllEvent {
         allEvents.forEach(event -> {
             SendPhoto sendPhoto = new SendPhoto();
             sendPhoto.setChatId(chatId.toString());
-            Long subscribersCount = eventSubscriptionRepository.getSubscribersCountByEventId(event.getId());
+            Long visitorsCount = eventVisitRepository.getVisitorsCount(event.getId());
+//            Long subscribersCount = eventSubscriptionRepository.getSubscribersCountByEventId(event.getId());
 
             sendPhoto.setCaption(String.format("""
                     %s
-                    Подписчиков: *%s*""", event, subscribersCount));
+                    Пришедших: *%s*""", event, visitorsCount));
 
-            InlineKeyboardButton editButton = new InlineKeyboardButton("редактировать");
-            editButton.setCallbackData("edit_offer-editing-event_" + event.getId());
+//            InlineKeyboardButton editButton = new InlineKeyboardButton("редактировать");
+//            editButton.setCallbackData("edit_offer-editing-event_" + event.getId());
 
             InlineKeyboardButton deleteButton = new InlineKeyboardButton("удалить");
             deleteButton.setCallbackData("delete_offer-deleting-event_" + event.getId());
 
-            InlineKeyboardButton registrateButton = new InlineKeyboardButton("отметить пришедших");
-            registrateButton.setCallbackData("visits_start-marking_" + event.getId());
+//            InlineKeyboardButton registrateButton = new InlineKeyboardButton("отметить пришедших");
+//            registrateButton.setCallbackData("visits_start-marking_" + event.getId());
 
-            InlineKeyboardButton messageButton = new InlineKeyboardButton("сообщение подписчикам");
-            messageButton.setCallbackData("message-to-subscribers_to-event-subscribers_" + event.getId());
+            InlineKeyboardButton messageButton = new InlineKeyboardButton("сообщение пришедшим");
+            messageButton.setCallbackData("message-to-visitors_to-event-visitors_" + event.getId());
 
             InlineKeyboardMarkup inlineKeyboardMarkup = InlineKeyboardMarkup.builder()
                     .clearKeyboard()
-                    .keyboardRow(List.of(editButton, deleteButton))
-                    .keyboardRow(List.of(registrateButton))
+                    .keyboardRow(List.of(deleteButton))
+//                    .keyboardRow(List.of(registrateButton))
                     .keyboardRow(List.of(messageButton))
                     .build();
 
