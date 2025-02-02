@@ -8,6 +8,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.regex.Pattern;
 
 @Component
 @RequiredArgsConstructor
@@ -80,6 +81,41 @@ public class StringValidator {
             return lastName;
         } else {
             return lastName;
+        }
+
+        return null;
+    }
+
+    public String validateAndFormatMiddleName(Long chatId, String middleName) {
+        if (middleName == null || middleName.length() <= 1) {
+            telegramSender.sendText(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                            Отчество должна содержать более одного символа.""")
+                    .build());
+        } else if (middleName.matches(".*\\d.*")) {
+            telegramSender.sendText(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                            Отчество не должно содержать цифры.""")
+                    .build());
+        } else if (middleName.contains(" ")) {
+            telegramSender.sendText(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                            Введите только отчество, без пробелов.""")
+                    .build());
+        } else if (!middleName.matches("[а-яА-Я]+")) {
+            telegramSender.sendText(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                            Отчество должно содержать только русские буквы.""")
+                    .build());
+        } else if (!Character.isUpperCase(middleName.charAt(0))) {
+            middleName = Character.toUpperCase(middleName.charAt(0)) + middleName.substring(1);
+            return middleName;
+        } else {
+            return middleName;
         }
 
         return null;
@@ -198,5 +234,21 @@ public class StringValidator {
                     .build());
             return null;
         }
+    }
+
+    private static final Pattern PHONE_PATTERN = Pattern.compile(
+            "^(\\+7|8)\\d{10}$"
+    );
+
+    private static final Pattern EMAIL_PATTERN = Pattern.compile(
+            "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
+    );
+
+    public static boolean isValidPhoneNumber(String phone) {
+        return phone != null && PHONE_PATTERN.matcher(phone).matches();
+    }
+
+    public static boolean isValidEmail(String email) {
+        return email != null && EMAIL_PATTERN.matcher(email).matches();
     }
 }

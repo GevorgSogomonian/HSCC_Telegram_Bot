@@ -1,4 +1,4 @@
-package org.example.all_users.admin.commands;
+package org.example.all_users.admin.commands.actual_event;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +19,7 @@ import java.util.List;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class AdminAllEvent {
+public class AdminActualEvents {
     private final UpdateUtil updateUtil;
     private final EventRepository eventRepository;
     private final TelegramSender telegramSender;
@@ -53,8 +53,11 @@ public class AdminAllEvent {
             InlineKeyboardButton deleteButton = new InlineKeyboardButton("удалить");
             deleteButton.setCallbackData("delete_offer-deleting-event_" + event.getId());
 
-            InlineKeyboardButton registrateButton = new InlineKeyboardButton("отметить пришедших");
+            InlineKeyboardButton registrateButton = new InlineKeyboardButton("регистрация");
             registrateButton.setCallbackData("visits_start-marking_" + event.getId());
+
+            InlineKeyboardButton infoButton = new InlineKeyboardButton("инфо");
+            infoButton.setCallbackData("statistic_actual-event_" + event.getId());
 
             InlineKeyboardButton messageButton = new InlineKeyboardButton("сообщение подписчикам");
             messageButton.setCallbackData("message-to-subscribers_to-event-subscribers_" + event.getId());
@@ -62,7 +65,7 @@ public class AdminAllEvent {
             InlineKeyboardMarkup inlineKeyboardMarkup = InlineKeyboardMarkup.builder()
                     .clearKeyboard()
                     .keyboardRow(List.of(editButton, deleteButton))
-                    .keyboardRow(List.of(registrateButton))
+                    .keyboardRow(List.of(registrateButton, infoButton))
                     .keyboardRow(List.of(messageButton))
                     .build();
 

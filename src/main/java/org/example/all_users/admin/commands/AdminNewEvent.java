@@ -400,7 +400,7 @@ public class AdminNewEvent {
 
         Thread pictureSaveThread = new Thread(() -> {
             try {
-                Thread.sleep(5000);
+                Thread.sleep(2000);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }

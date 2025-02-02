@@ -85,6 +85,17 @@ public class BaseSubscribeToEvent {
                 return;
             }
 
+            if (eventSubscriptionRepository.existsByChatIdAndEventId(chatId, eventId)) {
+                telegramSender.sendText(chatId, SendMessage.builder()
+                        .chatId(chatId)
+                        .text("""
+                            Вы уже подписаны на это мероприятие.""")
+                        .build());
+
+                stateManager.setUserState(chatId, UserState.COMMAND_CHOOSING);
+                return;
+            }
+
             String eventName = eventOptional.get().getEventName();
             InlineKeyboardButton yesButton = InlineKeyboardButton.builder()
                     .text("Да")
@@ -129,6 +140,18 @@ public class BaseSubscribeToEvent {
         Optional<Usr> userOptional = userRepository.findByChatId(chatId);
 
         if (eventOptional.isPresent() && userOptional.isPresent()) {
+
+            if (eventSubscriptionRepository.existsByChatIdAndEventId(chatId, eventId)) {
+                telegramSender.sendText(chatId, SendMessage.builder()
+                        .chatId(chatId)
+                        .text("""
+                            Вы уже подписаны на это мероприятие.""")
+                        .build());
+
+                stateManager.setUserState(chatId, UserState.COMMAND_CHOOSING);
+                return;
+            }
+
             Event event = eventOptional.get();
             Usr user = userOptional.get();
             String eventName = event.getEventName();

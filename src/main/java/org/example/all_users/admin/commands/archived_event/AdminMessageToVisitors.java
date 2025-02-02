@@ -1,15 +1,15 @@
-package org.example.all_users.admin.commands;
+package org.example.all_users.admin.commands.archived_event;
 
 import lombok.RequiredArgsConstructor;
+import org.example.all_users.admin.commands.AdminStart;
 import org.example.data_classes.data_base.entity.Event;
 import org.example.data_classes.enums.UserState;
-import org.example.data_classes.data_base.entity.Usr;
 import org.example.repository.EventRepository;
-import org.example.repository.UserRepository;
+import org.example.repository.EventVisitRepository;
 import org.example.util.state.StateManager;
 import org.example.util.telegram.api.TelegramSender;
 import org.example.util.telegram.helpers.UpdateUtil;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.ForwardMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -25,18 +25,17 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Service
+@Component
 @RequiredArgsConstructor
-public class AdminMessageToSubscribers {
-
+public class AdminMessageToVisitors {
     private final Map<Long, Long> eventIdMap = new ConcurrentHashMap<>();
 
     private final UpdateUtil updateUtil;
     private final TelegramSender telegramSender;
-    private final UserRepository userRepository;
     private final StateManager stateManager;
     private final AdminStart adminStart;
     private final EventRepository eventRepository;
+    private final EventVisitRepository eventVisitRepository;
 
     public void processCallbackQuery(Update update) {
         CallbackQuery callbackQuery = update.getCallbackQuery();
@@ -46,9 +45,9 @@ public class AdminMessageToSubscribers {
         String[] callbackTextArray = callbackData.split("_");
 
         switch (callbackTextArray[1]) {
-            case "to-event-subscribers" -> handleMessageToSubscribersCommand(chatId, callbackData, update);
-            case "accept-to-event-subscribers" -> acceptForwardMessages(chatId, callbackData, messageId, update);
-            case "cancel-to-event-subscribers" -> cancelForwardMessages(chatId, messageId, update);
+            case "to-event-visitors" -> handleMessageToSubscribersCommand(chatId, callbackData, update);
+            case "accept-to-event-visitors" -> acceptForwardMessages(chatId, callbackData, messageId, update);
+            case "cancel-to-event-visitors" -> cancelForwardMessages(chatId, messageId, update);
             default -> sendUnknownCallbackResponse(chatId);
         }
 
@@ -73,15 +72,15 @@ public class AdminMessageToSubscribers {
                     .chatId(chatId)
                     .replyMarkup(replyKeyboardRemove)
                     .text(String.format("""
-                        Пришлите сюда сообщение, а мы отправим его всем пользователям, подписанным на мероприятие: *%s*""", eventOptional.get().getEventName()))
+                        Пришлите сюда сообщение, а мы отправим его всем пользователям, пришедшим на мероприятие: *%s*""", eventOptional.get().getEventName()))
                     .build());
 
             eventIdMap.put(chatId, eventId);
-            stateManager.setUserState(chatId, UserState.ACCEPTING_FORWARD_MESSAGE_TO_EVENT_SUBSCRIBERS);
+            stateManager.setUserState(chatId, UserState.ACCEPTING_FORWARD_MESSAGE_TO_EVENT_VISITORS);
         } else {
             telegramSender.sendText(chatId, SendMessage.builder()
-                            .chatId(chatId)
-                            .text("""
+                    .chatId(chatId)
+                    .text("""
                                     Мероприятие не найдено.""")
                     .build());
             adminStart.handleStartState(update);
@@ -96,18 +95,18 @@ public class AdminMessageToSubscribers {
         telegramSender.sendText(chatId, unknownCallbackMessage);
     }
 
-    public void acceptingForwardMessageToEventSubscribers(Update update) {
+    public void acceptingForwardMessageToEventVisitors(Update update) {
         Long chatId = updateUtil.getChatId(update);
         Integer forwardMessageId = update.getMessage().getMessageId();
 
         InlineKeyboardButton yesButton = InlineKeyboardButton.builder()
                 .text("Да")
-                .callbackData("message-to-subscribers_accept-to-event-subscribers_" + forwardMessageId)
+                .callbackData("message-to-visitors_accept-to-event-visitors_" + forwardMessageId)
                 .build();
 
         InlineKeyboardButton noButton = InlineKeyboardButton.builder()
                 .text("Нет")
-                .callbackData("message-to-subscribers_cancel-to-event-subscribers")
+                .callbackData("message-to-visitors_cancel-to-event-visitors")
                 .build();
 
         InlineKeyboardMarkup inlineKeyboardMarkup = InlineKeyboardMarkup.builder()
@@ -124,20 +123,18 @@ public class AdminMessageToSubscribers {
     }
 
     private void acceptForwardMessages(Long chatId, String callbackText, Integer botMessageId, Update update) {
-        List<Usr> allUsers = userRepository.findAll();
         Long eventId = eventIdMap.get(chatId);
+        List<Long> allVisitorsChatId = eventVisitRepository.getVisitorsChatIds(eventId);
         Integer messageId = Integer.parseInt(callbackText.split("_")[2]);
 
-        if (!allUsers.isEmpty()) {
-            for (Usr user : allUsers) {
-                if (user.getSubscribedEventIds().contains(eventId.toString())) {
-                    telegramSender.forwardMessage(chatId, ForwardMessage.builder()
-                            .fromChatId(chatId)
-                            .chatId(user.getChatId())
-                            .messageId(messageId)
-                            .build());
-                }
-            }
+        if (!allVisitorsChatId.isEmpty()) {
+            allVisitorsChatId.forEach(visitorChatId -> {
+                telegramSender.forwardMessage(chatId, ForwardMessage.builder()
+                        .fromChatId(chatId)
+                        .chatId(visitorChatId)
+                        .messageId(messageId)
+                        .build());
+            });
         }
 
         telegramSender.sendText(chatId, SendMessage.builder()

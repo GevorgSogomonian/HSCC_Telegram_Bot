@@ -1,9 +1,9 @@
-package org.example.all_users.admin.commands;
+package org.example.all_users.admin.commands.actual_event;
 
 import lombok.RequiredArgsConstructor;
+import org.example.all_users.admin.commands.AdminStart;
 import org.example.data_classes.data_base.comparison_tables.EventVisit;
 import org.example.data_classes.data_base.entity.Event;
-import org.example.data_classes.data_base.entity.EventDestructor;
 import org.example.data_classes.data_base.entity.Usr;
 import org.example.data_classes.enums.UserState;
 import org.example.repository.EventSubscriptionRepository;
@@ -24,7 +24,6 @@ import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;

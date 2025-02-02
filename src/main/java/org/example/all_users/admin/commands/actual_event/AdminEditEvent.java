@@ -1,6 +1,7 @@
-package org.example.all_users.admin.commands;
+package org.example.all_users.admin.commands.actual_event;
 
 import lombok.RequiredArgsConstructor;
+import org.example.all_users.admin.commands.AdminStart;
 import org.example.data_classes.dto.ChatBotRequest;
 import org.example.data_classes.enums.UserState;
 import org.example.data_classes.data_base.entity.Event;
@@ -627,7 +628,7 @@ public class AdminEditEvent {
 
         Thread pictureSaveThread = new Thread(() -> {
             try {
-                Thread.sleep(5000);
+                Thread.sleep(2000);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }

@@ -22,6 +22,7 @@ dependencies {
     implementation("mysql:mysql-connector-java:8.0.33")
     implementation("org.liquibase:liquibase-core")
     implementation("io.minio:minio:8.4.3")
+    implementation("org.springframework:spring-jdbc")
 
     // Telegram Bot API
     implementation("org.telegram:telegrambots")

@@ -6,6 +6,7 @@ import org.example.util.image.ImageService;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.ForwardMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
@@ -14,7 +15,6 @@ import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage
 @RequiredArgsConstructor
 public class TelegramSender {
     private final TelegramApiQueue telegramApiQueue;
-    private final ImageService imageService;
 
     public void sendPhoto(Long chatId, SendPhoto sendPhoto) {
         telegramApiQueue.addResponse(new ChatBotResponse(chatId, sendPhoto));
@@ -38,5 +38,9 @@ public class TelegramSender {
 
     public void forwardMessage(Long chatId, ForwardMessage forwardMessage) {
         telegramApiQueue.addResponse(new ChatBotResponse(chatId, forwardMessage));
+    }
+
+    public void sendDocument(Long chatId, SendDocument sendDocument) {
+        telegramApiQueue.addResponse(new ChatBotResponse(chatId, sendDocument));
     }
 }

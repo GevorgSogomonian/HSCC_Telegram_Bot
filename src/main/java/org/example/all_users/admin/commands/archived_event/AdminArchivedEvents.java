@@ -1,4 +1,4 @@
-package org.example.all_users.admin.commands;
+package org.example.all_users.admin.commands.archived_event;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,9 +53,12 @@ public class AdminArchivedEvents {
             InlineKeyboardButton messageButton = new InlineKeyboardButton("сообщение пришедшим");
             messageButton.setCallbackData("message-to-visitors_to-event-visitors_" + event.getId());
 
+            InlineKeyboardButton statisticButton = new InlineKeyboardButton("статистика");
+            statisticButton.setCallbackData("statistic_archived-event_" + event.getId());
+
             InlineKeyboardMarkup inlineKeyboardMarkup = InlineKeyboardMarkup.builder()
                     .clearKeyboard()
-                    .keyboardRow(List.of(deleteButton))
+                    .keyboardRow(List.of(deleteButton, statisticButton))
                     .keyboardRow(List.of(messageButton))
                     .build();
 

@@ -27,4 +27,12 @@ public interface EventDestructorRepository extends JpaRepository<EventDestructor
             set destruction_time = ?2
             where event_id = ?1""")
     void updateTime(Long eventId, LocalDateTime newNotificationTime);
+
+    @Modifying
+    @Transactional
+    @Query(nativeQuery = true, value = """
+            delete
+            from event_destructor
+            where event_id = ?1""")
+    void deleteDestructor(Long eventId);
 }

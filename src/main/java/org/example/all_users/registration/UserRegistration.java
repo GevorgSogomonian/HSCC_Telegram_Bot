@@ -2,10 +2,12 @@ package org.example.all_users.registration;
 
 import lombok.RequiredArgsConstructor;
 import org.example.all_users.base_user.BaseUserService;
+import org.example.data_classes.data_base.entity.UsrExtraInfo;
 import org.example.data_classes.dto.ChatBotResponse;
 import org.example.data_classes.enums.UserState;
 import org.example.data_classes.data_base.entity.Usr;
 import org.example.repository.UserRepository;
+import org.example.repository.UsrExtraInfoRepository;
 import org.example.util.state.StateManager;
 import org.example.util.state.TemporaryDataService;
 import org.example.util.UserUtilService;
@@ -35,6 +37,8 @@ public class UserRegistration {
     private final UserRepository userRepository;
     private final BaseUserService baseUserService;
     private final TemporaryDataService<Usr> temporaryUserService;
+    private final TemporaryDataService<UsrExtraInfo> usrExtraInfoTemporaryDataService = new TemporaryDataService<>();
+    private final UsrExtraInfoRepository usrExtraInfoRepository;
 
     public void startRegistration(Update update) {
         Long chatId = updateUtil.getChatId(update);
@@ -144,36 +148,173 @@ public class UserRegistration {
         String userMessage = update.getMessage().getText().toLowerCase();
         Usr user = temporaryUserService.getTemporaryData(chatId);
 
-        if (userMessage.equals("да")) {
-            user.setIsHSEStudent(true);
-        } else if (userMessage.equals("нет")) {
-            user.setIsHSEStudent(false);
-        } else {
+        if (!userMessage.equals("да") && !userMessage.equals("нет")) {
             telegramSender.sendText(chatId, SendMessage.builder()
                     .chatId(chatId)
                     .text("""
                             Введите 'да' или 'нет'""")
                     .build());
-        }
-
-        telegramSender.sendText(chatId, SendMessage.builder()
-                .chatId(chatId)
-                .text("""
+        } else {
+            if (userMessage.equals("да")) {
+                user.setIsHSEStudent(true);
+                telegramSender.sendText(chatId, SendMessage.builder()
+                        .chatId(chatId)
+                        .text("""
                                 Ваш выбор сохранён!""")
-                .build());
+                        .build());
 
-        saveNewUser(chatId, user);
-        baseUserService.onUpdateRecieved(update);
+                saveNewUser(chatId, user);
+                baseUserService.onUpdateRecieved(update);
+            } else if (userMessage.equals("нет")) {
+                user.setIsHSEStudent(false);
+                temporaryUserService.putTemporaryData(chatId, user);
+                telegramSender.sendText(chatId, SendMessage.builder()
+                        .chatId(chatId)
+                        .text("""
+                                Ваш выбор сохранён!""")
+                        .build());
+
+                telegramSender.sendText(chatId, SendMessage.builder()
+                        .chatId(chatId)
+                        .text("""
+                                Вы не студент HSE, поэтому вам нужно будет заполнить ешё несколько пунктов. Эта информация нужна для оформления проходок! Указывайте корректные данные!""")
+                        .build());
+
+                requestMiddleName(chatId);
+            }
+        }
     }
 
     private void saveNewUser(Long chatId, Usr user) {
         userRepository.save(user);
-        stateManager.removeUserState(chatId);
 
         telegramSender.sendText(chatId, SendMessage.builder()
                 .chatId(chatId)
                 .text("""
-                                Поздравляю, вы зарегистрированы!""")
+                        Поздравляю, вы зарегистрированы!""")
                 .build());
+
+        stateManager.removeUserState(chatId);
+    }
+
+    private void requestMiddleName(Long chatId) {
+        telegramSender.sendText(chatId, SendMessage.builder()
+                .chatId(chatId)
+                .text("""
+                        Введите ваше отчество:""")
+                .build());
+
+        stateManager.setUserState(chatId, UserState.ENTERING_MIDDLE_NAME);
+    }
+
+    public void middleNameCheck(Update update) {
+        String middleName = update.getMessage().getText();
+        Long chatId = updateUtil.getChatId(update);
+
+        String formattedMiddleName = stringValidator.validateAndFormatMiddleName(chatId, middleName);
+
+        if (formattedMiddleName != null) {
+            Usr user = temporaryUserService.getTemporaryData(chatId);
+            UsrExtraInfo usrExtraInfo = new UsrExtraInfo();
+            usrExtraInfo.setChatId(chatId);
+            usrExtraInfo.setFirstName(user.getFirstName());
+            usrExtraInfo.setLastName(user.getLastName());
+            usrExtraInfo.setMiddleName(formattedMiddleName);
+
+            usrExtraInfoTemporaryDataService.putTemporaryData(chatId, usrExtraInfo);
+
+            telegramSender.sendText(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                            Ваше отчество сохранено!""")
+                    .build());
+
+            requestEmail(chatId);
+        }
+    }
+
+    private void requestEmail(Long chatId) {
+        telegramSender.sendText(chatId, SendMessage.builder()
+                .chatId(chatId)
+                .text("""
+                        Введите ваш адрес электронной почты:""")
+                .build());
+
+        stateManager.setUserState(chatId, UserState.ENTERING_EMAIL);
+    }
+
+    public void emailCheck(Update update) {
+        String email = update.getMessage().getText();
+        Long chatId = updateUtil.getChatId(update);
+
+        if (StringValidator.isValidEmail(email)) {
+            UsrExtraInfo usrExtraInfo = usrExtraInfoTemporaryDataService.getTemporaryData(chatId);
+            usrExtraInfo.setEmail(email);
+
+            usrExtraInfoTemporaryDataService.putTemporaryData(chatId, usrExtraInfo);
+
+            telegramSender.sendText(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                            Ваша почта сохранена!""")
+                    .build());
+
+            requestPhoneNumber(chatId);
+        } else {
+            telegramSender.sendText(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                            Некорректный формат данных!""")
+                    .build());
+        }
+    }
+
+    private void requestPhoneNumber(Long chatId) {
+        telegramSender.sendText(chatId, SendMessage.builder()
+                .chatId(chatId)
+                .text("""
+                        Введите ваш номер телефона:""")
+                .build());
+
+        stateManager.setUserState(chatId, UserState.ENTERING_PHONE_NUMBER);
+    }
+
+    public void phoneNumberCheck(Update update) {
+        String phoneNumber = update.getMessage().getText();
+        Long chatId = updateUtil.getChatId(update);
+
+        if (StringValidator.isValidPhoneNumber(phoneNumber)) {
+            UsrExtraInfo usrExtraInfo = usrExtraInfoTemporaryDataService.getTemporaryData(chatId);
+            Usr user = temporaryUserService.getTemporaryData(chatId);
+            usrExtraInfo.setPhoneNumber(phoneNumber);
+
+            telegramSender.sendText(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                            Ваш номер телефона сохранен!""")
+                    .build());
+
+            saveNewUserAndExtraInfo(chatId, user, usrExtraInfo);
+            baseUserService.onUpdateRecieved(update);
+        } else {
+            telegramSender.sendText(chatId, SendMessage.builder()
+                    .chatId(chatId)
+                    .text("""
+                            Некорректный формат данных!""")
+                    .build());
+        }
+    }
+
+    private void saveNewUserAndExtraInfo(Long chatId, Usr user, UsrExtraInfo usrExtraInfo) {
+        userRepository.save(user);
+        usrExtraInfoRepository.save(usrExtraInfo);
+
+        telegramSender.sendText(chatId, SendMessage.builder()
+                .chatId(chatId)
+                .text("""
+                        Поздравляю, вы зарегистрированы!""")
+                .build());
+
+        stateManager.removeUserState(chatId);
     }
 }

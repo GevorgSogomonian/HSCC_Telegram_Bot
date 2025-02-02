@@ -2,6 +2,7 @@ package org.example.all_users.admin.commands;
 
 import lombok.RequiredArgsConstructor;
 import org.example.data_classes.data_base.entity.Event;
+import org.example.repository.EventDestructorRepository;
 import org.example.repository.EventNotificationRepository;
 import org.example.repository.EventRepository;
 import org.example.util.image.ImageService;
@@ -27,6 +28,7 @@ public class AdminDeleteEvent {
     private final TelegramSender telegramSender;
     private final UpdateUtil updateUtil;
     private final EventNotificationRepository eventNotificationRepository;
+    private final EventDestructorRepository eventDestructorRepository;
 
     public void processCallbackQuery(Update update) {
         CallbackQuery callbackQuery = update.getCallbackQuery();
@@ -118,6 +120,7 @@ public class AdminDeleteEvent {
 
             eventRepository.delete(event);
             deleteNotification(eventId);
+            deleteDestructor(eventId);
 
             telegramSender.sendText(chatId, SendMessage.builder()
                     .chatId(chatId)
@@ -145,6 +148,9 @@ public class AdminDeleteEvent {
 
     private void deleteNotification(Long eventId) {
         eventNotificationRepository.deleteNotification(eventId);
+    }
+    private void deleteDestructor(Long eventId) {
+        eventDestructorRepository.deleteDestructor(eventId);
     }
 
     public void cancelDeletingEvent(Long chatId, Integer messageId) {

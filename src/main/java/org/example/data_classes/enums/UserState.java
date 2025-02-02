@@ -8,6 +8,9 @@ public enum UserState {
     ENTERING_FIRSTNAME,
     ENTERING_LASTNAME,
     ENTERING_STUDY_PLACE,
+    ENTERING_MIDDLE_NAME,
+    ENTERING_PHONE_NUMBER,
+    ENTERING_EMAIL,
 
     //admin registration
     CHOOSING_ROLE,

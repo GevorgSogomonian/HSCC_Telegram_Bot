@@ -3,14 +3,15 @@ package org.example.all_users.admin;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.all_users.admin.commands.AdminAllEvent;
-import org.example.all_users.admin.commands.AdminArchivedEvents;
+import org.example.all_users.admin.commands.actual_event.AdminActualEvents;
+import org.example.all_users.admin.commands.archived_event.AdminArchivedEvents;
 import org.example.all_users.admin.commands.AdminDeleteEvent;
-import org.example.all_users.admin.commands.AdminEditEvent;
-import org.example.all_users.admin.commands.AdminMessageToSubscribers;
-import org.example.all_users.admin.commands.AdminMessageToVisitors;
+import org.example.all_users.admin.commands.actual_event.AdminEditEvent;
+import org.example.all_users.admin.commands.actual_event.AdminMessageToSubscribers;
+import org.example.all_users.admin.commands.AdminEventStatistic;
+import org.example.all_users.admin.commands.archived_event.AdminMessageToVisitors;
 import org.example.all_users.admin.commands.AdminNewEvent;
-import org.example.all_users.admin.commands.AdminRegistrateUsers;
+import org.example.all_users.admin.commands.actual_event.AdminRegistrateUsers;
 import org.example.all_users.admin.commands.AdminStart;
 import org.example.all_users.admin.commands.BaseUserMode;
 import org.example.all_users.admin.commands.AdminMessageToAll;
@@ -38,7 +39,7 @@ public class AdminUserService {
     private final AdminEditEvent adminEditEvent;
     private final AdminStart adminStart;
     private final AdminNewEvent adminNewEvent;
-    private final AdminAllEvent adminAllEvent;
+    private final AdminActualEvents adminActualEvents;
     private final UpdateUtil updateUtil;
     private final BaseUserMode baseUserMode;
     private final AdminMessageToAll adminMessageToAll;
@@ -46,6 +47,7 @@ public class AdminUserService {
     private final AdminRegistrateUsers adminRegistrateUsers;
     private final AdminArchivedEvents adminArchivedEvents;
     private final AdminMessageToVisitors adminMessageToVisitors;
+    private final AdminEventStatistic adminEventStatistic;
 
     public void onUpdateRecieved(Update update) {
         if (update.hasCallbackQuery()) {
@@ -106,7 +108,7 @@ public class AdminUserService {
 
     @PostConstruct
     public void init() {
-        commandHandlers.put("Все мероприятия", adminAllEvent::handleAllEventsCommand);
+        commandHandlers.put("Все мероприятия", adminActualEvents::handleAllEventsCommand);
         commandHandlers.put("Новое мероприятие", adminNewEvent::handleNewEventCommand);
         commandHandlers.put("Сообщение всем", adminMessageToAll::handleMessageToAllCommand);
         commandHandlers.put("Архив", adminArchivedEvents::handleArchivedEventsCommand);
@@ -131,6 +133,7 @@ public class AdminUserService {
             case "message-to-subscribers" -> adminMessageToSubscribers.processCallbackQuery(update);
             case "message-to-visitors" -> adminMessageToVisitors.processCallbackQuery(update);
             case "visits" -> adminRegistrateUsers.processCallbackQuery(update);
+            case "statistic" -> adminEventStatistic.processCallbackQuery(update);
             default -> sendUnknownCallbackResponse(chatId);
         }
     }
