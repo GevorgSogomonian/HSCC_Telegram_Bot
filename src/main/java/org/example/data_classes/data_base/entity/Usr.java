@@ -10,7 +10,6 @@ import lombok.Data;
 @Entity
 @Data
 public class Usr {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -25,9 +24,9 @@ public class Usr {
     private Boolean isPremium;
     private Boolean isBot;
     private Long userId;
-    private Integer numberOfVisitedEvents;
-    private Integer numberOfMissedEvents;
-    private String subscribedEventIds;
+//    private Integer numberOfVisitedEvents;
+//    private Integer numberOfMissedEvents;
+//    private String subscribedEventIds;
     private Boolean isAdminClone;
     private Boolean isHSEStudent;
 }

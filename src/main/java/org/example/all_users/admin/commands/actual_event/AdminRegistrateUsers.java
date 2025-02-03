@@ -131,7 +131,7 @@ public class AdminRegistrateUsers {
                     EventVisit eventVisit = new EventVisit();
                     eventVisit.setChatId(visitor.getChatId());
                     eventVisit.setEventId(eventId);
-                    visitor.setNumberOfVisitedEvents(visitor.getNumberOfVisitedEvents() + 1);
+//                    visitor.setNumberOfVisitedEvents(visitor.getNumberOfVisitedEvents() + 1);
                     eventVisitRepository.save(eventVisit);
                     userRepository.save(visitor);
                     telegramSender.sendText(chatId, SendMessage.builder()

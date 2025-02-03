@@ -24,7 +24,6 @@ public class TelegramBotService extends TelegramLongPollingBot {
     private final RegistrationService registrationService;
     private final AllUserStart allUserStart;
     private final UpdateUtil updateUtil;
-    private final AdminRepository adminRepository;
 
     @Value("${spring.telegram.bot.username}")
     private String botUsername;

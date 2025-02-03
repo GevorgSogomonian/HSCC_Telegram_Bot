@@ -1,12 +1,13 @@
 package org.example.all_users.base_user.commands;
 
 import lombok.RequiredArgsConstructor;
+import org.example.data_classes.data_base.comparison_tables.EventMissing;
 import org.example.data_classes.data_base.entity.Event;
 import org.example.data_classes.data_base.comparison_tables.EventSubscription;
 import org.example.data_classes.data_base.entity.Usr;
 import org.example.data_classes.enums.UserState;
+import org.example.repository.EventMissingsRepository;
 import org.example.repository.MySQLInfo;
-import org.example.util.schedulers.notifications.EventNotificationService;
 import org.example.repository.EventRepository;
 import org.example.repository.EventSubscriptionRepository;
 import org.example.repository.UserRepository;
@@ -36,6 +37,7 @@ public class BaseSubscribeToEvent {
     private final EventSubscriptionRepository eventSubscriptionRepository;
     private final MySQLInfo mySQLInfo;
     private final StateManager stateManager;
+    private final EventMissingsRepository eventMissingsRepository;
 
     public void processCallbackQuery(Update update) {
         CallbackQuery callbackQuery = update.getCallbackQuery();
@@ -156,19 +158,25 @@ public class BaseSubscribeToEvent {
             Usr user = userOptional.get();
             String eventName = event.getEventName();
 
-            String subscribedEventIds = user.getSubscribedEventIds();
-            String updatedSubscribedEventIds;
-            if (subscribedEventIds.isBlank()) {
-                updatedSubscribedEventIds = eventId.toString();
-            } else {
-                updatedSubscribedEventIds = subscribedEventIds + "_" + eventId;
-            }
-            user.setSubscribedEventIds(updatedSubscribedEventIds);
+//            String subscribedEventIds = user.getSubscribedEventIds();
+//            String updatedSubscribedEventIds;
+//            if (subscribedEventIds.isBlank()) {
+//                updatedSubscribedEventIds = eventId.toString();
+//            } else {
+//                updatedSubscribedEventIds = subscribedEventIds + "_" + eventId;
+//            }
+//            user.setSubscribedEventIds(updatedSubscribedEventIds);
 
             EventSubscription eventSubscription = new EventSubscription();
             eventSubscription.setChatId(chatId);
             eventSubscription.setEventId(eventId);
             eventSubscriptionRepository.save(eventSubscription);
+
+            EventMissing eventMissing = new EventMissing();
+            eventMissing.setChatId(chatId);
+            eventMissing.setEventId(eventId);
+            eventMissingsRepository.save(eventMissing);
+
             userRepository.save(user);
 
             telegramSender.sendText(chatId, SendMessage.builder()

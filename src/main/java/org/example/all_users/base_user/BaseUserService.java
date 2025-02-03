@@ -3,6 +3,7 @@ package org.example.all_users.base_user;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.example.all_users.base_user.commands.BaseActualEvents;
+import org.example.all_users.base_user.commands.BaseEditInfo;
 import org.example.all_users.base_user.commands.BaseMyEvents;
 import org.example.all_users.base_user.commands.BaseStart;
 import org.example.all_users.base_user.commands.BaseSubscribeToEvent;
@@ -15,7 +16,6 @@ import org.example.util.telegram.api.TelegramSender;
 import org.example.util.telegram.helpers.UpdateUtil;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.util.HashMap;
@@ -38,6 +38,7 @@ public class BaseUserService {
     private final BaseUnsubscribeFromEvent baseUnsubscribeFromEvent;
     private final BaseMyEvents baseMyEvents;
     private final ReturnToAdminMode returnToAdminMode;
+    private final BaseEditInfo baseEditInfo;
 
     public void onUpdateRecieved(Update update) {
         if (update.hasCallbackQuery()) {
@@ -55,13 +56,25 @@ public class BaseUserService {
         switch (state) {
             case START -> baseStart.handleStartState(update);
             case COMMAND_CHOOSING -> processTextMessage(update);
+
+            //edit profile
+            case ACCEPTING_EDITING_PROFILE_FIRST_NAME -> baseEditInfo.acceptingEditingFirstName(update);
+            case EDITING_PROFILE_FIRST_NAME -> baseEditInfo.checkEditedFirstName(update);
+            case ACCEPTING_EDITING_PROFILE_LAST_NAME -> baseEditInfo.acceptingEditingLastName(update);
+            case EDITING_PROFILE_LAST_NAME -> baseEditInfo.checkEditedLastName(update);
+            case ACCEPTING_EDITING_PROFILE_MIDDLE_NAME -> baseEditInfo.acceptingEditingMiddleName(update);
+            case EDITING_PROFILE_MIDDLE_NAME -> baseEditInfo.checkEditedMiddleName(update);
+            case ACCEPTING_EDITING_PROFILE_EMAIL -> baseEditInfo.acceptingEditingEmail(update);
+            case EDITING_PROFILE_EMAIL -> baseEditInfo.checkEditedEmail(update);
+            case ACCEPTING_EDITING_PROFILE_PHONE_NUMBER -> baseEditInfo.acceptingEditingPhoneNumber(update);
+            case EDITING_PROFILE_PHONE_NUMBER -> baseEditInfo.checkEditedPhoneNumber(update);
+            case ACCEPTING_SAVE_EDITED_PROFILE -> baseEditInfo.acceptingSavingEditedEvent(update);
+
             default -> baseStart.handleStartState(update);
         }
     }
 
     private void processCallbackQuery(Update update) {
-        CallbackQuery callbackQuery = update.getCallbackQuery();
-        Integer messageId = callbackQuery.getMessage().getMessageId();
         String callbackData = update.getCallbackQuery().getData();
         Long chatId = updateUtil.getChatId(update);
         String[] callbackTextArray = callbackData.split("_");
@@ -69,6 +82,7 @@ public class BaseUserService {
         switch (callbackTextArray[0]) {
             case "subscribe" -> baseSubscribeToEvent.processCallbackQuery(update);
             case "unsubscribe" -> baseUnsubscribeFromEvent.processCallbackQuery(update);
+            case "user-edit" -> baseEditInfo.processCallbackQuery(update);
             default -> sendUnknownCallbackResponse(chatId);
         }
     }

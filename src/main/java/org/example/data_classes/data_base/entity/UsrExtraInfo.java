@@ -17,8 +17,8 @@ public class UsrExtraInfo {
     @Column(unique = true, nullable = false)
     private Long chatId;
 
-    private String firstName;
-    private String lastName;
+//    private String firstName;
+//    private String lastName;
     private String middleName;
     private String email;
     private String phoneNumber;

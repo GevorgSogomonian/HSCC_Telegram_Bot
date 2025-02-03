@@ -29,7 +29,4 @@ public interface UserRepository extends JpaRepository<Usr, Long> {
 
     @Query("SELECT u.chatId FROM Usr u")
     List<Long> getAllUsersChatId();
-
-    @Query("SELECT u.subscribedEventIds FROM Usr u")
-    List<String> getAllSubscribedEventIds();
 }

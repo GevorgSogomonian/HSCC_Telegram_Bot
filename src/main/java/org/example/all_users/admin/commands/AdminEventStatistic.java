@@ -25,14 +25,13 @@ public class AdminEventStatistic {
 
     public void processCallbackQuery(Update update) {
         CallbackQuery callbackQuery = update.getCallbackQuery();
-        Integer messageId = callbackQuery.getMessage().getMessageId();
         String callbackData = update.getCallbackQuery().getData();
         Long chatId = updateUtil.getChatId(update);
         String[] callbackTextArray = callbackData.split("_");
 
         switch (callbackTextArray[1]) {
-            case "archived-event" -> sendArchivedEventStatistic(chatId, callbackData, messageId);
-            case "actual-event" -> sendActualEventStatistic(chatId, callbackData, messageId);
+            case "archived-event" -> sendArchivedEventStatistic(chatId, callbackData);
+            case "actual-event" -> sendActualEventStatistic(chatId, callbackData);
             default -> sendUnknownCallbackResponse(chatId);
         }
 
@@ -52,7 +51,7 @@ public class AdminEventStatistic {
         telegramSender.sendText(chatId, unknownCallbackMessage);
     }
 
-    public void sendArchivedEventStatistic(Long chatId, String callbackData, Integer messageId) {
+    public void sendArchivedEventStatistic(Long chatId, String callbackData) {
         String[] callbackTextArray = callbackData.split("_");
         Long eventId = Long.parseLong(callbackTextArray[2]);
         byte[] csvData = csvExportRepository.archivedEventCSVStatistic(eventId);
@@ -65,10 +64,10 @@ public class AdminEventStatistic {
         telegramSender.sendDocument(chatId, sendDocument);
     }
 
-    public void sendActualEventStatistic(Long chatId, String callbackData, Integer messageId) {
+    public void sendActualEventStatistic(Long chatId, String callbackData) {
         String[] callbackTextArray = callbackData.split("_");
         Long eventId = Long.parseLong(callbackTextArray[2]);
-        byte[] csvData = csvExportRepository.archivedEventCSVStatistic(eventId);
+        byte[] csvData = csvExportRepository.actualEventCSVStatistic(eventId);
         InputStream inputStream = new ByteArrayInputStream(csvData);
 
         SendDocument sendDocument = new SendDocument();

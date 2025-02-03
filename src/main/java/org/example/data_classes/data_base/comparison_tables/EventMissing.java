@@ -8,7 +8,7 @@ import lombok.Data;
 
 @Entity
 @Data
-public class EventMissings {
+public class EventMissing {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
