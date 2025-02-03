@@ -157,6 +157,7 @@ public class UserRegistration {
         } else {
             if (userMessage.equals("да")) {
                 user.setIsHSEStudent(true);
+
                 telegramSender.sendText(chatId, SendMessage.builder()
                         .chatId(chatId)
                         .text("""
@@ -164,6 +165,7 @@ public class UserRegistration {
                         .build());
 
                 saveNewUser(chatId, user);
+                temporaryUserService.removeTemporaryData(chatId);
                 baseUserService.onUpdateRecieved(update);
             } else if (userMessage.equals("нет")) {
                 user.setIsHSEStudent(false);
@@ -187,6 +189,12 @@ public class UserRegistration {
 
     private void saveNewUser(Long chatId, Usr user) {
         userRepository.save(user);
+        UsrExtraInfo usrExtraInfo = new UsrExtraInfo();
+        usrExtraInfo.setChatId(chatId);
+        usrExtraInfo.setMiddleName("---");
+        usrExtraInfo.setEmail("---");
+        usrExtraInfo.setPhoneNumber("---");
+        usrExtraInfoRepository.save(usrExtraInfo);
 
         telegramSender.sendText(chatId, SendMessage.builder()
                 .chatId(chatId)
