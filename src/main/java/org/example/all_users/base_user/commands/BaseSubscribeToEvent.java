@@ -6,7 +6,7 @@ import org.example.data_classes.data_base.entity.Event;
 import org.example.data_classes.data_base.comparison_tables.EventSubscription;
 import org.example.data_classes.data_base.entity.Usr;
 import org.example.data_classes.enums.UserState;
-import org.example.repository.EventMissingsRepository;
+import org.example.repository.EventMissingRepository;
 import org.example.repository.MySQLInfo;
 import org.example.repository.EventRepository;
 import org.example.repository.EventSubscriptionRepository;
@@ -37,7 +37,7 @@ public class BaseSubscribeToEvent {
     private final EventSubscriptionRepository eventSubscriptionRepository;
     private final MySQLInfo mySQLInfo;
     private final StateManager stateManager;
-    private final EventMissingsRepository eventMissingsRepository;
+    private final EventMissingRepository eventMissingRepository;
 
     public void processCallbackQuery(Update update) {
         CallbackQuery callbackQuery = update.getCallbackQuery();
@@ -175,7 +175,7 @@ public class BaseSubscribeToEvent {
             EventMissing eventMissing = new EventMissing();
             eventMissing.setChatId(chatId);
             eventMissing.setEventId(eventId);
-            eventMissingsRepository.save(eventMissing);
+            eventMissingRepository.save(eventMissing);
 
             userRepository.save(user);
 

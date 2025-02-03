@@ -12,8 +12,6 @@ import java.util.List;
 @Repository
 public interface EventSubscriptionRepository extends JpaRepository<EventSubscription, Long> {
 
-    boolean searchByChatId(Long chatId);
-    
     @Query(nativeQuery = true, value = """
             select event_subscription.event_id
             from event_subscription
@@ -31,12 +29,6 @@ public interface EventSubscriptionRepository extends JpaRepository<EventSubscrip
             from event_subscription
             where event_id = ?1""")
     Long getSubscribersCountByEventId(Long eventId);
-
-    @Query(nativeQuery = true, value = """
-            select count(*)
-            from event_subscription
-            where chat_id = ?1""")
-    Long getSubscribersCountByChatId(Long chatId);
 
     @Modifying
     @Transactional

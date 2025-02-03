@@ -3,8 +3,11 @@ package org.example.all_users.admin.commands;
 import lombok.RequiredArgsConstructor;
 import org.example.data_classes.data_base.entity.Event;
 import org.example.repository.EventDestructorRepository;
+import org.example.repository.EventMissingRepository;
 import org.example.repository.EventNotificationRepository;
 import org.example.repository.EventRepository;
+import org.example.repository.EventSubscriptionRepository;
+import org.example.repository.EventVisitRepository;
 import org.example.util.image.ImageService;
 import org.example.util.telegram.api.TelegramSender;
 import org.example.util.telegram.helpers.UpdateUtil;
@@ -29,6 +32,9 @@ public class AdminDeleteEvent {
     private final UpdateUtil updateUtil;
     private final EventNotificationRepository eventNotificationRepository;
     private final EventDestructorRepository eventDestructorRepository;
+    private final EventMissingRepository eventMissingRepository;
+    private final EventSubscriptionRepository eventSubscriptionRepository;
+    private final EventVisitRepository eventVisitRepository;
 
     public void processCallbackQuery(Update update) {
         CallbackQuery callbackQuery = update.getCallbackQuery();
@@ -121,6 +127,9 @@ public class AdminDeleteEvent {
             eventRepository.delete(event);
             deleteNotification(eventId);
             deleteDestructor(eventId);
+            eventMissingRepository.removeEventMissingsByEventId(eventId);
+            eventSubscriptionRepository.removeEventSubscriptionByEventId(eventId);
+            eventVisitRepository.removeEventVisitsByEventId(eventId);
 
             telegramSender.sendText(chatId, SendMessage.builder()
                     .chatId(chatId)

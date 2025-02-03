@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.data_classes.data_base.entity.Event;
 import org.example.data_classes.data_base.entity.Usr;
 import org.example.data_classes.enums.UserState;
-import org.example.repository.EventMissingsRepository;
+import org.example.repository.EventMissingRepository;
 import org.example.repository.EventRepository;
 import org.example.repository.EventSubscriptionRepository;
 import org.example.repository.MySQLInfo;
@@ -35,7 +35,7 @@ public class BaseUnsubscribeFromEvent {
     private final EventSubscriptionRepository eventSubscriptionRepository;
     private final MySQLInfo mySQLInfo;
     private final StateManager stateManager;
-    private final EventMissingsRepository eventMissingsRepository;
+    private final EventMissingRepository eventMissingRepository;
 
     public void processCallbackQuery(Update update) {
         CallbackQuery callbackQuery = update.getCallbackQuery();
@@ -144,7 +144,7 @@ public class BaseUnsubscribeFromEvent {
                         .build());
             } else {
                 eventSubscriptionRepository.removeEventSubscriptionByEventIdAndChatId(eventId, chatId);
-                eventMissingsRepository.removeEventMissingsByEventIdAndChatId(eventId, chatId);
+                eventMissingRepository.removeEventMissingsByEventIdAndChatId(eventId, chatId);
                 telegramSender.sendText(chatId, SendMessage.builder()
                         .chatId(chatId)
                         .text(String.format("""

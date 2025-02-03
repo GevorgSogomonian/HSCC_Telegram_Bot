@@ -1,4 +1,4 @@
 databaseChangeLog:
 
   - includeAll:
-      path: db/changelog/2025/01
+      path: db/changelog/2025/02

@@ -170,14 +170,14 @@ public class StringValidator {
     public LocalDateTime validateEventStartTime(Long chatId, String userMessage) {
         try {
             LocalDateTime eventStartTime = LocalDateTime.parse(userMessage, DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"));
-            if (eventStartTime.isBefore(LocalDateTime.now())) {
-                telegramSender.sendText(chatId, SendMessage.builder()
-                                .chatId(chatId)
-                                .text("""
-                                        Эта дата уже прошла. Укажите другое время начала мероприятия.""")
-                        .build());
-                return null;
-            }
+//            if (eventStartTime.isBefore(LocalDateTime.now())) {
+//                telegramSender.sendText(chatId, SendMessage.builder()
+//                                .chatId(chatId)
+//                                .text("""
+//                                        Эта дата уже прошла. Укажите другое время начала мероприятия.""")
+//                        .build());
+//                return null;
+//            }
             return eventStartTime;
         } catch (DateTimeParseException e) {
             telegramSender.sendText(chatId, SendMessage.builder()

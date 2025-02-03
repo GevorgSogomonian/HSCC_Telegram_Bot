@@ -18,13 +18,21 @@ public interface EventNotificationRepository extends JpaRepository<EventNotifica
             WHERE n.notification_time < CURRENT_TIMESTAMP""")
     List<EventNotification> getActualNotifications();
 
+//    @Modifying
+//    @Transactional
+//    @Query(nativeQuery = true, value = """
+//            INSERT INTO event_notification (event_id, notification_time, notification_text)
+//            VALUES (?1, ?2, ?3)
+//            ON DUPLICATE KEY UPDATE
+//                                 notification_time = VALUES(notification_time),
+//                                 notification_text = VALUES(notification_text);""")
+//    void updateNotification(Long eventId, LocalDateTime newNotificationTime, String newNotificationText);
+    
+    boolean existsByEventId(Long eventId);
+
     @Modifying
     @Transactional
-    @Query(nativeQuery = true, value = """
-            update event_notification
-            set notification_time = ?2, notification_text = ?3
-            where event_id = ?1""")
-    void updateNotification(Long eventId, LocalDateTime newNotificationTime, String newNotificationText);
+    void removeByEventId(Long eventId);
 
     @Modifying
     @Transactional

@@ -2,6 +2,7 @@ package org.example.all_users.admin.commands.actual_event;
 
 import lombok.RequiredArgsConstructor;
 import org.example.all_users.admin.commands.AdminStart;
+import org.example.data_classes.data_base.entity.EventNotification;
 import org.example.data_classes.dto.ChatBotRequest;
 import org.example.data_classes.enums.UserState;
 import org.example.data_classes.data_base.entity.Event;
@@ -652,9 +653,17 @@ public class AdminEditEvent {
     private void editNotificationTime(Long chatId, Long eventId) {
         Event event = temporaryEditedEventService.getTemporaryData(chatId);
 
-        eventNotificationRepository.updateNotification(eventId, event.getStartTime().minusHours(24), String.format("""
+        EventNotification eventNotification = new EventNotification();
+        eventNotification.setEventId(eventId);
+        eventNotification.setNotificationTime(event.getStartTime().minusHours(24));
+        eventNotification.setNotificationText(String.format("""
                     Напоминаем, что *%s* состоится мероприятие *%s*!""",
                 event.getFormattedStartDate(), event.getEventName()));
+
+        if (eventNotificationRepository.existsByEventId(eventId)) {
+            eventNotificationRepository.removeByEventId(eventId);
+        }
+        eventNotificationRepository.save(eventNotification);
     }
 
     private void editDestructionTime(Long chatId, Long eventId) {

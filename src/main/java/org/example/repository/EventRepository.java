@@ -16,14 +16,14 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     @Query(nativeQuery = true, value = """
                         select *
                         from event
-                        where start_time + HOUR(24) > CURRENT_TIMESTAMP
+                        where start_time + INTERVAL 24 HOUR > CURRENT_TIMESTAMP
                         """)
     List<Event> getActualEvents();
 
     @Query(nativeQuery = true, value = """
                         select *
                         from event
-                        where start_time + HOUR(24) < CURRENT_TIMESTAMP
+                        where start_time + INTERVAL 24 HOUR < CURRENT_TIMESTAMP
                         """)
     List<Event> getArchivedEvents();
 }
