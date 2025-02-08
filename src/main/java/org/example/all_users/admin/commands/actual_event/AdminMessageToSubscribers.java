@@ -4,10 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.example.all_users.admin.commands.AdminStart;
 import org.example.data_classes.data_base.entity.Event;
 import org.example.data_classes.enums.UserState;
-import org.example.data_classes.data_base.entity.Usr;
 import org.example.repository.EventRepository;
 import org.example.repository.EventSubscriptionRepository;
-import org.example.repository.UserRepository;
 import org.example.util.state.StateManager;
 import org.example.util.telegram.api.TelegramSender;
 import org.example.util.telegram.helpers.UpdateUtil;
@@ -35,7 +33,6 @@ public class AdminMessageToSubscribers {
 
     private final UpdateUtil updateUtil;
     private final TelegramSender telegramSender;
-    private final UserRepository userRepository;
     private final StateManager stateManager;
     private final AdminStart adminStart;
     private final EventRepository eventRepository;

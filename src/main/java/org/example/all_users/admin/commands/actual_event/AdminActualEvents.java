@@ -7,6 +7,7 @@ import org.example.repository.EventRepository;
 import org.example.repository.EventSubscriptionRepository;
 import org.example.util.telegram.api.TelegramSender;
 import org.example.util.telegram.helpers.UpdateUtil;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
@@ -25,9 +26,12 @@ public class AdminActualEvents {
     private final TelegramSender telegramSender;
     private final EventSubscriptionRepository eventSubscriptionRepository;
 
+    @Value("${evironment.eventDescructionAfterHour}")
+    private int eventDescructionAfterHour;
+
     public void handleAllEventsCommand(Update update) {
         Long chatId = updateUtil.getChatId(update);
-        List<Event> allEvents = eventRepository.getActualEvents();
+        List<Event> allEvents = eventRepository.getActualEvents(eventDescructionAfterHour);
 
         if (allEvents.isEmpty()) {
             telegramSender.sendText(chatId, SendMessage.builder()

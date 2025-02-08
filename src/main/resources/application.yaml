@@ -29,6 +29,12 @@ spring:
     change-log: classpath:db/db.changelog-master.yaml
     enabled: true
 
+evironment:
+  beforeSaveWaitTime: 2000
+  notificationBeforeHourSend: 24
+  eventDescructionAfterHour: 24
+  registrationStartsBeforeHour: 24
+
 #для тестирования в локальных docker контейнерах
 ---
 spring:

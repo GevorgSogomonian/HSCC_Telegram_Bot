@@ -17,6 +17,7 @@ import org.example.util.telegram.api.TelegramSender;
 import org.example.util.telegram.helpers.ActionsChainUtil;
 import org.example.util.telegram.helpers.UpdateUtil;
 import org.example.util.validation.StringValidator;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -46,6 +47,9 @@ public class AdminRegistrateUsers {
     private final ActionsChainUtil actionsChainUtil;
     private final MySQLInfo mySQLInfo;
     private final EventMissingRepository eventMissingRepository;
+
+    @Value("${evironment.registrationStartsBeforeHour}")
+    private int startsBeforeHour;
 
     public void processCallbackQuery(Update update) {
         CallbackQuery callbackQuery = update.getCallbackQuery();
@@ -82,16 +86,15 @@ public class AdminRegistrateUsers {
 
         if (eventOptional.isPresent()) {
             Event event = eventOptional.get();
-            if (mySQLInfo.getCurrentTimeStamp().isBefore(event.getStartTime().minusHours(24))) {
+            if (mySQLInfo.getCurrentTimeStamp().isBefore(event.getStartTime().minusHours(startsBeforeHour))) {
                 telegramSender.sendText(chatId, SendMessage.builder()
                         .chatId(chatId)
-                        .text("""
-                            Регистрация начнётся за сутки до начала мероприятия.""")
+                        .text(String.format("""
+                            Регистрация начнётся за *%s* часа до начала мероприятия.""", startsBeforeHour))
                         .build());
                 stateManager.setUserState(chatId, UserState.COMMAND_CHOOSING);
                 return;
             }
-
             ReplyKeyboardRemove replyKeyboardRemove = ReplyKeyboardRemove.builder()
                     .removeKeyboard(true)
                     .build();
@@ -133,7 +136,6 @@ public class AdminRegistrateUsers {
                     EventVisit eventVisit = new EventVisit();
                     eventVisit.setChatId(visitor.getChatId());
                     eventVisit.setEventId(eventId);
-//                    visitor.setNumberOfVisitedEvents(visitor.getNumberOfVisitedEvents() + 1);
                     eventVisitRepository.save(eventVisit);
                     userRepository.save(visitor);
                     eventMissingRepository.removeEventMissingsByEventIdAndChatId(eventId, visitor.getChatId());

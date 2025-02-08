@@ -158,15 +158,6 @@ public class BaseSubscribeToEvent {
             Usr user = userOptional.get();
             String eventName = event.getEventName();
 
-//            String subscribedEventIds = user.getSubscribedEventIds();
-//            String updatedSubscribedEventIds;
-//            if (subscribedEventIds.isBlank()) {
-//                updatedSubscribedEventIds = eventId.toString();
-//            } else {
-//                updatedSubscribedEventIds = subscribedEventIds + "_" + eventId;
-//            }
-//            user.setSubscribedEventIds(updatedSubscribedEventIds);
-
             EventSubscription eventSubscription = new EventSubscription();
             eventSubscription.setChatId(chatId);
             eventSubscription.setEventId(eventId);

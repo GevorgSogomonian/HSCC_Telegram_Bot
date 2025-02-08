@@ -51,7 +51,6 @@ public class BaseEditInfo {
             case "offer-editing" -> handleInfoEditCommand(chatId, messageId);
             case "accept-editing" -> acceptProfileEditing(chatId, messageId);
             case "cancel-editing" -> cancelEditingPtofile(chatId, messageId);
-//            case "duration" -> checkEventDuration(update);
             default -> callbackUtil.sendUnknownCallbackResponse(chatId);
         }
 

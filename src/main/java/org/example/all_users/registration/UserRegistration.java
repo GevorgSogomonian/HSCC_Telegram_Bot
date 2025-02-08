@@ -222,11 +222,8 @@ public class UserRegistration {
         String formattedMiddleName = stringValidator.validateAndFormatMiddleName(chatId, middleName);
 
         if (formattedMiddleName != null) {
-//            Usr user = temporaryUserService.getTemporaryData(chatId);
             UsrExtraInfo usrExtraInfo = new UsrExtraInfo();
             usrExtraInfo.setChatId(chatId);
-//            usrExtraInfo.setFirstName(user.getFirstName());
-//            usrExtraInfo.setLastName(user.getLastName());
             usrExtraInfo.setMiddleName(formattedMiddleName);
 
             usrExtraInfoTemporaryDataService.putTemporaryData(chatId, usrExtraInfo);

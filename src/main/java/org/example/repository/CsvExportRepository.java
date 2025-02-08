@@ -18,7 +18,7 @@ public class CsvExportRepository {
     public byte[] archivedEventCSVStatistic(Long eventId) {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(byteArrayOutputStream, StandardCharsets.UTF_8))) {
-            writer.println("chatId,come,first_name,last_name,middle_name,email,phone_number,is_HSE_student"); // Заголовки CSV
+            writer.println("chatId,come,first_name,last_name,middle_name,email,phone_number,is_HSE_student");
 
             List<String[]> data = jdbcTemplate.query("""
                         SELECT tbl.chat_id, tbl.come, u.first_name, u.last_name, ue.middle_name, ue.email, ue.phone_number, u.ishsestudent
@@ -36,7 +36,7 @@ public class CsvExportRepository {
                             inner join usr_extra_info ue
                                 on tbl.chat_id = ue.chat_id
                         """,
-                    new Object[]{eventId, eventId},  // Подставляем параметр
+                    new Object[]{eventId, eventId},
                     (rs, rowNum) -> new String[]{rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4), rs.getString(5), rs.getString(6), rs.getString(7), rs.getString(8)}
             );
 
@@ -45,13 +45,13 @@ public class CsvExportRepository {
             }
             writer.flush();
         }
-        return byteArrayOutputStream.toByteArray(); // Возвращаем CSV в виде массива байтов
+        return byteArrayOutputStream.toByteArray();
     }
 
     public byte[] actualEventCSVStatistic(Long eventId) {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(byteArrayOutputStream, StandardCharsets.UTF_8))) {
-            writer.println("chatId,is_HSE_student,first_name,last_name,middle_name,email,phone_number"); // Заголовки CSV
+            writer.println("chatId,is_HSE_student,first_name,last_name,middle_name,email,phone_number");
 
             List<String[]> data = jdbcTemplate.query("""
                         SELECT es.chat_id, u.ishsestudent, u.first_name, u.last_name, ue.middle_name, ue.email, ue.phone_number
@@ -62,7 +62,7 @@ public class CsvExportRepository {
                                 on es.chat_id = ue.chat_id
                         where es.event_id = ?
                         """,
-                    new Object[]{eventId},  // Подставляем параметр
+                    new Object[]{eventId},
                     (rs, rowNum) -> new String[]{rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4), rs.getString(5), rs.getString(6), rs.getString(7)}
             );
 
@@ -71,6 +71,6 @@ public class CsvExportRepository {
             }
             writer.flush();
         }
-        return byteArrayOutputStream.toByteArray(); // Возвращаем CSV в виде массива байтов
+        return byteArrayOutputStream.toByteArray();
     }
 }

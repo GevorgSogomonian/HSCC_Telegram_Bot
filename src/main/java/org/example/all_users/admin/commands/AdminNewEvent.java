@@ -16,6 +16,7 @@ import org.example.util.telegram.helpers.ActionsChainUtil;
 import org.example.util.validation.StringValidator;
 import org.example.util.state.TemporaryDataService;
 import org.example.util.telegram.helpers.UpdateUtil;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
@@ -47,6 +48,13 @@ public class AdminNewEvent {
     private final ActionsChainUtil actionsChainUtil;
     private final EventNotificationService eventNotificationService;
     private final EventDestructorRepository eventDestructorRepository;
+
+    @Value("${evironment.beforeSaveWaitTime}")
+    private int beforeSaveWaitTime;
+    @Value("${evironment.eventDescructionAfterHour}")
+    private int eventDescructionAfterHour;
+    @Value("${evironment.notificationBeforeHourSend}")
+    private int notificationBeforeHourSend;
 
     public void processCallbackQuery(Update update) {
         CallbackQuery callbackQuery = update.getCallbackQuery();
@@ -400,7 +408,7 @@ public class AdminNewEvent {
 
         Thread pictureSaveThread = new Thread(() -> {
             try {
-                Thread.sleep(2000);
+                Thread.sleep(beforeSaveWaitTime);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -428,7 +436,7 @@ public class AdminNewEvent {
         eventNotification.setNotificationText(String.format("""
                     Напоминаем, что *%s* состоится мероприятие *%s*!""",
                 event.getFormattedStartDate(), event.getEventName()));
-        eventNotification.setNotificationTime(event.getStartTime().minusHours(24));
+        eventNotification.setNotificationTime(event.getStartTime().minusHours(notificationBeforeHourSend));
         eventNotification.setEventId(eventId);
 
         eventNotificationService.saveNotification(eventNotification);
@@ -437,7 +445,7 @@ public class AdminNewEvent {
     private void saveDestructionMessage(Long chatId, Long eventId) {
         Event event = temporaryEventService.getTemporaryData(chatId);
         EventDestructor eventDestructor = new EventDestructor();
-        eventDestructor.setDestructionTime(event.getStartTime().plusHours(24));
+        eventDestructor.setDestructionTime(event.getStartTime().plusHours(eventDescructionAfterHour));
         eventDestructor.setEventId(eventId);
 
         eventDestructorRepository.save(eventDestructor);
