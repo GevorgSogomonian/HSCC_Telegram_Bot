@@ -56,11 +56,11 @@ public class AdminEditEvent {
     private final EventNotificationRepository eventNotificationRepository;
     private final EventDestructorRepository eventDestructorRepository;
 
-    @Value("${evironment.beforeSaveWaitTime}")
+    @Value("${evironment.before-save-wait-time}")
     private int beforeSaveWaitTime;
-    @Value("${evironment.notificationBeforeHourSend}")
+    @Value("${evironment.notification-before-hour-send}")
     private int notificationBeforeHourSend;
-    @Value("${evironment.eventDescructionAfterHour}")
+    @Value("${evironment.event-descruction-after-hour}")
     private int eventDescructionAfterHour;
 
     public void processCallbackQuery(Update update) {

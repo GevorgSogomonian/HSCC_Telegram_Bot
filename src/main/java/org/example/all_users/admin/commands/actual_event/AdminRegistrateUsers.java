@@ -48,7 +48,7 @@ public class AdminRegistrateUsers {
     private final MySQLInfo mySQLInfo;
     private final EventMissingRepository eventMissingRepository;
 
-    @Value("${evironment.registrationStartsBeforeHour}")
+    @Value("${evironment.registration-starts-before-hour}")
     private int startsBeforeHour;
 
     public void processCallbackQuery(Update update) {

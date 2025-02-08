@@ -18,10 +18,10 @@ public class CsvExportRepository {
     public byte[] archivedEventCSVStatistic(Long eventId) {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(byteArrayOutputStream, StandardCharsets.UTF_8))) {
-            writer.println("chatId,come,first_name,last_name,middle_name,email,phone_number,is_HSE_student");
+            writer.println("ID,come,first_name,last_name,middle_name,email,phone_number,is_HSE_student");
 
             List<String[]> data = jdbcTemplate.query("""
-                        SELECT tbl.chat_id, tbl.come, u.first_name, u.last_name, ue.middle_name, ue.email, ue.phone_number, u.ishsestudent
+                        SELECT u.user_id, tbl.come, u.first_name, u.last_name, ue.middle_name, ue.email, ue.phone_number, u.ishsestudent
                         FROM (
                             SELECT ev.chat_id, ev.event_id, 1 AS come
                             FROM event_visit ev
@@ -51,10 +51,10 @@ public class CsvExportRepository {
     public byte[] actualEventCSVStatistic(Long eventId) {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(byteArrayOutputStream, StandardCharsets.UTF_8))) {
-            writer.println("chatId,is_HSE_student,first_name,last_name,middle_name,email,phone_number");
+            writer.println("ID,is_HSE_student,first_name,last_name,middle_name,email,phone_number");
 
             List<String[]> data = jdbcTemplate.query("""
-                        SELECT es.chat_id, u.ishsestudent, u.first_name, u.last_name, ue.middle_name, ue.email, ue.phone_number
+                        SELECT u.user_id, u.ishsestudent, u.first_name, u.last_name, ue.middle_name, ue.email, ue.phone_number
                         FROM event_subscription es
                             inner join usr u
                                 on es.chat_id = u.chat_id

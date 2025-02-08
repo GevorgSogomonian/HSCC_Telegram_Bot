@@ -26,7 +26,7 @@ public class AdminArchivedEvents {
     private final TelegramSender telegramSender;
     private final EventVisitRepository eventVisitRepository;
 
-    @Value("${evironment.eventDescructionAfterHour}")
+    @Value("${evironment.event-descruction-after-hour}")
     private int eventDescructionAfterHour;
 
     public void handleArchivedEventsCommand(Update update) {

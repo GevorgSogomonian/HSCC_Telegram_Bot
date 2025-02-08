@@ -2,6 +2,7 @@ package org.example.util.validation;
 
 import lombok.RequiredArgsConstructor;
 import org.example.util.telegram.api.TelegramSender;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 
@@ -15,6 +16,13 @@ import java.util.regex.Pattern;
 public class StringValidator {
 
     private final TelegramSender telegramSender;
+
+    @Value("${evironment.max-name-length}")
+    private int maxNameLength;
+    @Value("${evironment.max-description-length}")
+    private int maxDescriptionLength;
+    @Value("${evironment.max-location-length}")
+    private int maxLocationLength;
 
     public String validateAndFormatFirstName(Long chatId, String firstName) {
         if (firstName == null || firstName.length() <= 1) {
@@ -122,8 +130,6 @@ public class StringValidator {
     }
 
     public String validateEventName(Long chatId, String eventName) {
-        int maxNameLength = 120;
-
         if (eventName.isBlank()) {
             telegramSender.sendText(chatId, SendMessage.builder()
                             .chatId(chatId)
@@ -145,8 +151,6 @@ public class StringValidator {
     }
 
     public String validateEventDescription(Long chatId, String eventDescription) {
-        int maxDescriptionLength = 840;
-
         if (eventDescription.isBlank()) {
             telegramSender.sendText(chatId, SendMessage.builder()
                     .chatId(chatId)
@@ -170,14 +174,14 @@ public class StringValidator {
     public LocalDateTime validateEventStartTime(Long chatId, String userMessage) {
         try {
             LocalDateTime eventStartTime = LocalDateTime.parse(userMessage, DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"));
-//            if (eventStartTime.isBefore(LocalDateTime.now())) {
-//                telegramSender.sendText(chatId, SendMessage.builder()
-//                                .chatId(chatId)
-//                                .text("""
-//                                        Эта дата уже прошла. Укажите другое время начала мероприятия.""")
-//                        .build());
-//                return null;
-//            }
+            if (eventStartTime.isBefore(LocalDateTime.now())) {
+                telegramSender.sendText(chatId, SendMessage.builder()
+                                .chatId(chatId)
+                                .text("""
+                                        Эта дата уже прошла. Укажите другое время начала мероприятия.""")
+                        .build());
+                return null;
+            }
             return eventStartTime;
         } catch (DateTimeParseException e) {
             telegramSender.sendText(chatId, SendMessage.builder()
@@ -192,8 +196,6 @@ public class StringValidator {
     }
 
     public String validateEventLocation(Long chatId, String userMessage) {
-        int maxLocationLength = 70;
-
         if (userMessage.isBlank()) {
             telegramSender.sendText(chatId, SendMessage.builder()
                     .chatId(chatId)

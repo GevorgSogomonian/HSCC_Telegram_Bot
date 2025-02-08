@@ -49,11 +49,11 @@ public class AdminNewEvent {
     private final EventNotificationService eventNotificationService;
     private final EventDestructorRepository eventDestructorRepository;
 
-    @Value("${evironment.beforeSaveWaitTime}")
+    @Value("${evironment.before-save-wait-time}")
     private int beforeSaveWaitTime;
-    @Value("${evironment.eventDescructionAfterHour}")
+    @Value("${evironment.event-descruction-after-hour}")
     private int eventDescructionAfterHour;
-    @Value("${evironment.notificationBeforeHourSend}")
+    @Value("${evironment.notification-before-hour-send}")
     private int notificationBeforeHourSend;
 
     public void processCallbackQuery(Update update) {

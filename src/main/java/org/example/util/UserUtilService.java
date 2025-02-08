@@ -27,9 +27,6 @@ public class UserUtilService {
         newUser.setLanguageCode(fromUser.getLanguageCode());
         newUser.setIsPremium(fromUser.getIsPremium());
         newUser.setIsBot(fromUser.getIsBot());
-//        newUser.setNumberOfVisitedEvents(0);
-//        newUser.setNumberOfMissedEvents(0);
-//        newUser.setSubscribedEventIds("");
         newUser.setIsAdminClone(false);
 
         Long uniqueNumber = nextUniqueNumber();

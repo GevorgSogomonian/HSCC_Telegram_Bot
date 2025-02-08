@@ -11,6 +11,7 @@ services:
       - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: test
+      ENVIRONMENT_ADMIN_PASSWORD: 6v4jww
     depends_on:
       - mysql_hse
       - minio
@@ -19,9 +20,9 @@ services:
     image: mysql:8
     container_name: mysql_hse
     environment:
-      MYSQL_ROOT_PASSWORD: hse_root_password  # Пароль для root
+      MYSQL_ROOT_PASSWORD: aahsTA  # Пароль для root
       MYSQL_USER: hse_user                    # Пользователь
-      MYSQL_PASSWORD: hse_password            # Пароль для пользователя
+      MYSQL_PASSWORD: SnQWpR            # Пароль для пользователя
       MYSQL_DATABASE: hse_database
       TZ: "Europe/Moscow"
     ports:
@@ -38,7 +39,7 @@ services:
       - "9001:9001"  # Console Port
     environment:
       MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_ROOT_PASSWORD: FOeeCmCq
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data

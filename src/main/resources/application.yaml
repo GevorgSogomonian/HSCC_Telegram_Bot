@@ -2,7 +2,7 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.MySQL8Dialect
     hibernate:
-      ddl-auto: none
+      ddl-auto: create
     show-sql: true
     properties:
       hibernate:
@@ -11,7 +11,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3308/hse_database?serverTimezone=Europe/Moscow
     username: hse_user
-    password: hse_password
+    password: SnQWpR
 
   telegram:
     bot:
@@ -22,18 +22,22 @@ spring:
   minio:
     url: http://localhost:9000
     accessKey: minioadmin
-    secretKey: minioadmin
+    secretKey: FOeeCmCq
     bucketName: pictures
 
   liquibase:
     change-log: classpath:db/db.changelog-master.yaml
-    enabled: true
+    enabled: false
 
 evironment:
-  beforeSaveWaitTime: 2000
-  notificationBeforeHourSend: 24
-  eventDescructionAfterHour: 24
-  registrationStartsBeforeHour: 24
+  before-save-wait-time: 2000
+  notification-before-hour-send: 24
+  event-descruction-after-hour: 24
+  registration-starts-before-hour: 24
+  max-name-length: 120
+  max-description-length: 840
+  max-location-length: 70
+  admin-password: 6v4jww
 
 #для тестирования в локальных docker контейнерах
 ---
@@ -71,8 +75,8 @@ spring:
 
   datasource:
     url: jdbc:mysql://mysql_hse:3306/hse_database?serverTimezone=Europe/Moscow
-    username: hse_user
-    password: hse_password
+#    username: hse_user
+#    password: SnQWpR
 
   telegram:
     bot:

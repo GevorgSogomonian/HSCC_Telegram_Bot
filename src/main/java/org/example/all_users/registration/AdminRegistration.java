@@ -10,6 +10,7 @@ import org.example.util.state.StateManager;
 import org.example.util.UserUtilService;
 import org.example.util.telegram.api.TelegramApiQueue;
 import org.example.util.telegram.helpers.UpdateUtil;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -28,6 +29,9 @@ public class AdminRegistration {
     private final AdminUserService adminUserService;
     private final AdminRepository adminRepository;
 
+    @Value("${evironment.admin-password}")
+    private String adminPassword;
+
     public void startRegistration(Update update) {
         Long chatId = updateUtil.getChatId(update);
 
@@ -43,7 +47,7 @@ public class AdminRegistration {
         String message = update.getMessage().getText();
         Long chatId = updateUtil.getChatId(update);
 
-        if (message.equals("1234")) {
+        if (message.equals(adminPassword)) {
             telegramApiQueue.addResponse(new ChatBotResponse(chatId, SendMessage.builder()
                     .chatId(chatId)
                     .text("""
