@@ -29,8 +29,8 @@ dependencies {
     implementation("org.telegram:telegrambots-spring-boot-starter:6.5.0")
 
     // Lombook
-    implementation("org.projectlombok:lombok:1.18.26")
-    annotationProcessor("org.projectlombok:lombok:1.18.26")
+    implementation("org.projectlombok:lombok:1.18.30")
+    annotationProcessor("org.projectlombok:lombok:1.18.30")
 
     // Logging
     implementation("org.slf4j:slf4j-api:2.0.9")

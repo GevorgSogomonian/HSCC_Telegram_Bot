@@ -32,7 +32,7 @@ public class AdminStart {
         SendMessage sendMessage = SendMessage.builder()
                 .chatId(chatId)
                 .text("""
-                выберите действие""")
+                        выберите действие""")
                 .build();
 
         KeyboardButton keyboardButton1 = new KeyboardButton("Новое мероприятие");

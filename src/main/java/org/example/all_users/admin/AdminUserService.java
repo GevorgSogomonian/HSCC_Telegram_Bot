@@ -72,7 +72,7 @@ public class AdminUserService {
             case CHOOSING_EVENT_DURATION -> adminNewEvent.handleEventDuration(update);
             case ENTERING_EVENT_LOCATION -> adminNewEvent.handleEventLocation(update);
             case ACCEPTING_SAVE_NEW_EVENT -> adminNewEvent.acceptingSavingNewEvent(update);
-
+            
             //Edit event
             case ACCEPTING_EDITING_EVENT_NAME -> adminEditEvent.acceptingEditingEventName(update);
             case EDITING_EVENT_NAME -> adminEditEvent.checkEditedEventName(update);

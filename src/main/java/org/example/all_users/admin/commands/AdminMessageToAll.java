@@ -36,10 +36,10 @@ public class AdminMessageToAll {
                 .build();
 
         telegramSender.sendText(chatId, SendMessage.builder()
-                        .chatId(chatId)
-                        .replyMarkup(replyKeyboardRemove)
-                        .text("""
-                                Пришлите сюда сообщение, а мы отправим его всем зарегистрированным пользователям.""")
+                .chatId(chatId)
+                .replyMarkup(replyKeyboardRemove)
+                .text("""
+                        Пришлите сюда сообщение, а мы отправим его всем зарегистрированным пользователям.""")
                 .build());
 
         stateManager.setUserState(chatId, UserState.ACCEPTING_FORWARD_MESSAGE_TO_ALL);
@@ -110,17 +110,17 @@ public class AdminMessageToAll {
         if (!allUsersChatId.isEmpty()) {
             for (Long forwardChatId : allUsersChatId) {
                 telegramSender.forwardMessage(chatId, ForwardMessage.builder()
-                                .fromChatId(chatId)
-                                .chatId(forwardChatId)
-                                .messageId(messageId)
+                        .fromChatId(chatId)
+                        .chatId(forwardChatId)
+                        .messageId(messageId)
                         .build());
             }
         }
 
         telegramSender.sendText(chatId, SendMessage.builder()
-                        .chatId(chatId)
-                        .text("""
-                                Сообщения отправлены.""")
+                .chatId(chatId)
+                .text("""
+                        Сообщения отправлены.""")
                 .build());
 
         telegramSender.deleteMessage(chatId, DeleteMessage.builder()

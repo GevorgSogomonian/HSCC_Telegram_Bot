@@ -33,12 +33,12 @@ public class BaseUserMode {
                     .build();
 
             telegramSender.sendText(chatId, SendMessage.builder()
-                            .chatId(chatId)
-                            .replyMarkup(replyKeyboardRemove)
-                            .text("""
-                                    Сначала, вы должны зарегистрировать пользовательский аккаунт.
-                                    
-                                    Чтобы активировать процесс регистрации, пришлите любое сообщение.""")
+                    .chatId(chatId)
+                    .replyMarkup(replyKeyboardRemove)
+                    .text("""
+                            Сначала, вы должны зарегистрировать пользовательский аккаунт.
+
+                            Чтобы активировать процесс регистрации, пришлите любое сообщение.""")
                     .build());
         } else {
             baseStart.handleStartState(update);

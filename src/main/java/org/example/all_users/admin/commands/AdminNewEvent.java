@@ -118,7 +118,7 @@ public class AdminNewEvent {
         telegramSender.sendText(chatId, SendMessage.builder()
                 .chatId(chatId)
                 .text("""
-                            Создаём новое мероприятие.""")
+                        Создаём новое мероприятие.""")
                 .build());
 
         telegramSender.deleteMessage(chatId, DeleteMessage.builder()
@@ -180,7 +180,7 @@ public class AdminNewEvent {
                 telegramSender.sendText(chatId, SendMessage.builder()
                         .chatId(chatId)
                         .text("""
-                    Отлично! Название сохранено!""")
+                                Отлично! Название сохранено!""")
                         .build());
 
                 requestEventDescription(chatId);
@@ -209,9 +209,9 @@ public class AdminNewEvent {
             temporaryEventService.putTemporaryData(chatId, temporaryEvent);
 
             telegramSender.sendText(chatId, SendMessage.builder()
-                            .chatId(chatId)
-                            .text("""
-                    Отлично! Описание мероприятия сохранено!""")
+                    .chatId(chatId)
+                    .text("""
+                            Отлично! Описание мероприятия сохранено!""")
                     .build());
 
             requestEventPicture(chatId);
@@ -222,7 +222,7 @@ public class AdminNewEvent {
         telegramSender.sendText(chatId, SendMessage.builder()
                 .chatId(chatId)
                 .text("""
-                                Пришлите *обложку* мероприятия:""")
+                        Пришлите *обложку* мероприятия:""")
                 .build());
 
         stateManager.setUserState(chatId, UserState.ENTERING_EVENT_PICTURE);
@@ -258,11 +258,11 @@ public class AdminNewEvent {
 
     private void requestEventStartTime(Long chatId) {
         telegramSender.sendText(chatId, SendMessage.builder()
-                        .chatId(chatId)
-                        .text("""
-                Введите *дату и время начала* мероприятия в формате:
-                
-                `DD.MM.YYYY HH:mm`""")
+                .chatId(chatId)
+                .text("""
+                        Введите *дату и время начала* мероприятия в формате:
+
+                        `DD.MM.YYYY HH:mm`""")
                 .build());
 
         stateManager.setUserState(chatId, UserState.ENTERING_EVENT_START_TIME);
@@ -297,10 +297,10 @@ public class AdminNewEvent {
         markup.setKeyboard(rows);
 
         telegramSender.sendText(chatId, SendMessage.builder()
-                        .chatId(chatId)
-                        .text("""
-                                Выберите *продолжительность* мероприятия:""")
-                        .replyMarkup(markup)
+                .chatId(chatId)
+                .text("""
+                        Выберите *продолжительность* мероприятия:""")
+                .replyMarkup(markup)
                 .build());
 
         stateManager.setUserState(chatId, UserState.CHOOSING_EVENT_DURATION);
@@ -328,7 +328,7 @@ public class AdminNewEvent {
                 telegramSender.sendText(chatId, SendMessage.builder()
                         .chatId(chatId)
                         .text("""
-                            Продолжительность мероприятия сохранена.""")
+                                Продолжительность мероприятия сохранена.""")
                         .build());
 
                 telegramSender.deleteMessage(chatId, DeleteMessage.builder()
@@ -348,7 +348,7 @@ public class AdminNewEvent {
                 telegramSender.sendText(chatId, SendMessage.builder()
                         .chatId(chatId)
                         .text("""
-                                    Некорректный выбор. Попробуйте снова.""")
+                                Некорректный выбор. Попробуйте снова.""")
                         .build());
             }
         }
@@ -358,7 +358,7 @@ public class AdminNewEvent {
         telegramSender.sendText(chatId, SendMessage.builder()
                 .chatId(chatId)
                 .text("""
-                Укажите *место проведения* мероприятия:""")
+                        Укажите *место проведения* мероприятия:""")
                 .build());
 
         stateManager.setUserState(chatId, UserState.ENTERING_EVENT_LOCATION);
@@ -423,7 +423,7 @@ public class AdminNewEvent {
         telegramSender.sendText(chatId, SendMessage.builder()
                 .chatId(chatId)
                 .text("""
-                            Новое мероприятие сохранено.""")
+                        Новое мероприятие сохранено.""")
                 .build());
 
         stateManager.setUserState(chatId, UserState.COMMAND_CHOOSING);
@@ -434,7 +434,7 @@ public class AdminNewEvent {
         Event event = temporaryEventService.getTemporaryData(chatId);
         EventNotification eventNotification = new EventNotification();
         eventNotification.setNotificationText(String.format("""
-                    Напоминаем, что *%s* состоится мероприятие *%s*!""",
+                        Напоминаем, что *%s* состоится мероприятие *%s*!""",
                 event.getFormattedStartDate(), event.getEventName()));
         eventNotification.setNotificationTime(event.getStartTime().minusHours(notificationBeforeHourSend));
         eventNotification.setEventId(eventId);

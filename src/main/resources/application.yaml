@@ -12,7 +12,6 @@ spring:
     url: jdbc:mysql://localhost:3308/hse_database?serverTimezone=Europe/Moscow
     username: hse_user
     password: SnQWpR
-
   telegram:
     bot:
       username: hscc_test_bot
@@ -38,6 +37,15 @@ evironment:
   max-description-length: 840
   max-location-length: 70
   admin-password: 6v4jww
+
+management:
+  metrics:
+    enable:
+      process: false
+    binders:
+      tomcat:
+        process:
+          enabled: false
 
 #для тестирования в локальных docker контейнерах
 ---

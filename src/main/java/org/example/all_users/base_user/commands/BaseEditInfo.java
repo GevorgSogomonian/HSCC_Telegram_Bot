@@ -79,7 +79,7 @@ public class BaseEditInfo {
             telegramSender.sendText(chatId, SendMessage.builder()
                     .chatId(chatId)
                     .text("""
-                            Начать редактирование прифиля?""")
+                            Начать редактирование профиля?""")
                     .replyMarkup(inlineKeyboardMarkup)
                     .build());
         } else {
@@ -213,7 +213,7 @@ public class BaseEditInfo {
 
     private void offerEnterNewLastName(Long chatId) {
         actionsChainUtil.offerNextAction(chatId, """
-                Хотите изменить *фамалию*?""", UserState.ACCEPTING_EDITING_PROFILE_LAST_NAME);
+                Хотите изменить *фамилию*?""", UserState.ACCEPTING_EDITING_PROFILE_LAST_NAME);
     }
 
     public void acceptingEditingLastName(Update update) {
@@ -227,6 +227,8 @@ public class BaseEditInfo {
 
         if (answer) {
             requestNewLastName(chatId, usr);
+        } else if (usr.getIsHSEStudent()){
+            offerSaveEditedProfile(chatId);
         } else {
             offerEnterNewMiddleName(chatId);
         }

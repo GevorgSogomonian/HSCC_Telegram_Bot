@@ -51,10 +51,10 @@ public class AdminDeleteEvent {
         }
 
         telegramSender.answerCallbackQuerry(chatId, AnswerCallbackQuery.builder()
-                        .callbackQueryId(callbackQuery.getId())
-                        .text("""
-                                Команда обработана.""")
-                        .showAlert(false)
+                .callbackQueryId(callbackQuery.getId())
+                .text("""
+                        Команда обработана.""")
+                .showAlert(false)
                 .build());
     }
 
@@ -91,14 +91,14 @@ public class AdminDeleteEvent {
             telegramSender.sendText(chatId, SendMessage.builder()
                     .chatId(chatId)
                     .text(String.format("""
-                                Вы уверены, что хотите удалить мероприятие: *%s* ?""", eventName))
+                            Вы уверены, что хотите удалить мероприятие: *%s* ?""", eventName))
                     .replyMarkup(inlineKeyboardMarkup)
                     .build());
         } else {
             telegramSender.sendText(chatId, SendMessage.builder()
-                            .chatId(chatId)
-                            .text("""
-                                    Мероприятие не найдено.""")
+                    .chatId(chatId)
+                    .text("""
+                            Мероприятие не найдено.""")
                     .build());
 
             telegramSender.deleteMessage(chatId, DeleteMessage.builder()
@@ -134,7 +134,7 @@ public class AdminDeleteEvent {
             telegramSender.sendText(chatId, SendMessage.builder()
                     .chatId(chatId)
                     .text(String.format("""
-                    Мероприятие *%s* удалено!""", eventName))
+                            Мероприятие *%s* удалено!""", eventName))
                     .build());
         } else {
             telegramSender.sendText(chatId, SendMessage.builder()
@@ -158,20 +158,21 @@ public class AdminDeleteEvent {
     private void deleteNotification(Long eventId) {
         eventNotificationRepository.deleteNotification(eventId);
     }
+
     private void deleteDestructor(Long eventId) {
         eventDestructorRepository.deleteDestructor(eventId);
     }
 
     public void cancelDeletingEvent(Long chatId, Integer messageId) {
         telegramSender.sendText(chatId, SendMessage.builder()
-                        .chatId(chatId)
-                        .text("""
-                                Удаление отменено.""")
+                .chatId(chatId)
+                .text("""
+                        Удаление отменено.""")
                 .build());
 
         telegramSender.deleteMessage(chatId, DeleteMessage.builder()
-                        .chatId(chatId)
-                        .messageId(messageId)
+                .chatId(chatId)
+                .messageId(messageId)
                 .build());
     }
 }
